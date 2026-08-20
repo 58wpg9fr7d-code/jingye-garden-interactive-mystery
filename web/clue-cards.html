@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>无喙镜渊 · 线索卡</title>
+<style>
+  :root{
+    --bg0:#050a0c; --bg1:#0a1418; --bg2:#0e1c22;
+    --gold:#c9a24b; --gold-dim:#8a6f33;
+    --cyan:#2bd4d4; --magenta:#d44b8f;
+    --ink:#cdd6d8; --ink-dim:#7c8a8d;
+    --line:rgba(201,162,75,.35);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:"Songti SC","STSong","Noto Serif SC",serif;
+    color:var(--ink);
+    background:
+      radial-gradient(1200px 700px at 70% -10%, rgba(43,212,212,.07), transparent 60%),
+      radial-gradient(900px 600px at 10% 110%, rgba(212,75,143,.06), transparent 60%),
+      linear-gradient(160deg,var(--bg1),var(--bg0));
+    min-height:100%;
+    padding:32px 20px 60px;
+    overflow-x:hidden;
+  }
+  /* 网格质感 */
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:
+      linear-gradient(rgba(201,162,75,.04) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(201,162,75,.04) 1px,transparent 1px);
+    background-size:46px 46px;
+    mask-image:radial-gradient(circle at 50% 30%,#000 30%,transparent 80%);
+  }
+  .wrap{position:relative;z-index:1;max-width:1080px;margin:0 auto}
+
+  header{text-align:center;margin-bottom:8px}
+  h1{
+    font-size:38px;letter-spacing:.32em;font-weight:600;
+    color:var(--gold);
+    text-shadow:0 0 18px rgba(201,162,75,.45),0 0 2px rgba(201,162,75,.8);
+  }
+  .sub{margin-top:6px;color:var(--ink-dim);letter-spacing:.5em;font-size:13px}
+
+  /* 进度控制 */
+  .progress{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:22px 0 10px}
+  .pbtn{
+    font-family:inherit;cursor:pointer;
+    background:rgba(14,28,34,.7);color:var(--ink-dim);
+    border:1px solid var(--line);border-radius:2px;
+    padding:8px 16px;font-size:13px;letter-spacing:.12em;
+    transition:.25s;
+  }
+  .pbtn:hover{color:var(--ink);border-color:var(--gold)}
+  .pbtn.on{color:#06121a;background:linear-gradient(180deg,var(--gold),var(--gold-dim));
+    border-color:var(--gold);box-shadow:0 0 14px rgba(201,162,75,.4);font-weight:600}
+
+  .hint{text-align:center;color:var(--ink-dim);font-size:12.5px;margin:2px 0 22px;letter-spacing:.06em}
+
+  /* 抽卡区 */
+  .stage{display:flex;flex-direction:column;align-items:center;gap:26px;margin-bottom:34px}
+  .card-slot{
+    width:340px;height:480px;perspective:1400px;position:relative;
+  }
+  .card{
+    position:absolute;inset:0;border-radius:10px;
+    transform-style:preserve-3d;transition:transform .7s cubic-bezier(.2,.8,.2,1);
+    background:
+      radial-gradient(120% 80% at 50% -10%, rgba(43,212,212,.10), transparent 55%),
+      linear-gradient(160deg,#0e1c22,#070f12);
+    border:1px solid var(--line);
+    box-shadow:0 18px 50px rgba(0,0,0,.6),inset 0 0 30px rgba(43,212,212,.05);
+    display:flex;flex-direction:column;overflow:hidden;
+  }
+  .card::after{ /* 镜面倒影 */
+    content:"";position:absolute;left:0;right:0;bottom:-60%;height:60%;
+    background:linear-gradient(180deg,rgba(43,212,212,.10),transparent);
+    transform:scaleY(-1);filter:blur(8px);opacity:.4;pointer-events:none;
+  }
+  .card .topbar{height:6px;background:linear-gradient(90deg,var(--gold),transparent)}
+  .card .tag{
+    align-self:flex-start;margin:18px 0 0 22px;font-size:12px;letter-spacing:.18em;
+    color:var(--cyan);border:1px solid rgba(43,212,212,.4);border-radius:2px;padding:3px 10px;
+  }
+  .card .ctitle{
+    margin:16px 22px 0;font-size:25px;letter-spacing:.14em;color:var(--gold);
+    text-shadow:0 0 12px rgba(201,162,75,.35);
+  }
+  .card .rule{height:1px;margin:14px 22px;background:linear-gradient(90deg,var(--line),transparent)}
+  .card .cbody{
+    margin:0 24px;font-size:15px;line-height:2;color:var(--ink);letter-spacing:.04em;
+    flex:1;
+  }
+  .card .foot{margin:auto 22px 18px;font-size:11px;color:var(--ink-dim);letter-spacing:.1em}
+
+  .pull-btn{
+    font-family:inherit;cursor:pointer;font-size:16px;letter-spacing:.3em;
+    color:#06121a;background:linear-gradient(180deg,var(--gold),var(--gold-dim));
+    border:none;border-radius:3px;padding:14px 46px;font-weight:600;
+    box-shadow:0 0 22px rgba(201,162,75,.35);transition:.2s;
+  }
+  .pull-btn:hover{transform:translateY(-2px);box-shadow:0 0 30px rgba(201,162,75,.55)}
+  .pull-btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none;transform:none}
+
+  /* 已抽收藏 */
+  .sec-title{font-size:15px;letter-spacing:.3em;color:var(--gold-dim);margin:26px 4px 14px;
+    border-left:3px solid var(--gold);padding-left:12px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+  .mini{
+    background:linear-gradient(160deg,#0c181d,#070f12);
+    border:1px solid var(--line);border-radius:8px;padding:16px 16px 14px;
+    box-shadow:0 8px 22px rgba(0,0,0,.45);
+  }
+  .mini .mt{color:var(--gold);font-size:16px;letter-spacing:.1em;margin-bottom:6px}
+  .mini .mb{color:var(--ink-dim);font-size:13px;line-height:1.7}
+  .mini .mtag{display:inline-block;margin-top:8px;font-size:11px;color:var(--cyan);
+    border:1px solid rgba(43,212,212,.35);border-radius:2px;padding:2px 8px}
+
+  /* 未解锁层 */
+  .locked-note{color:var(--ink-dim);font-size:12.5px;margin:8px 4px 14px;letter-spacing:.05em}
+  .lockgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+  .lock{
+    height:120px;border:1px dashed rgba(124,138,141,.4);border-radius:8px;
+    display:flex;align-items:center;justify-content:center;flex-direction:column;
+    background:repeating-linear-gradient(45deg,rgba(124,138,141,.05) 0 8px,transparent 8px 16px);
+    color:var(--ink-dim);letter-spacing:.2em;font-size:18px;position:relative;
+  }
+  .lock small{font-size:11px;letter-spacing:.1em;margin-top:8px;color:#5a6668}
+  .lock:hover small{color:var(--magenta)}
+  footer{text-align:center;margin-top:46px;color:#46514f;font-size:11px;letter-spacing:.2em}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>无喙镜渊</h1>
+    <div class="sub">线 索 卡 · 抽 卡</div>
+  </header>
+
+  <div class="progress" id="progress"></div>
+  <div class="hint" id="hint"></div>
+
+  <div class="stage">
+    <div class="card-slot">
+      <div class="card" id="card">
+        <div class="topbar"></div>
+        <div class="tag" id="cTag">公共案件</div>
+        <div class="ctitle" id="cTitle">镜渊未启</div>
+        <div class="rule"></div>
+        <div class="cbody" id="cBody">点击下方「抽卡」，从已解锁的线索层中揭出一张。</div>
+        <div class="foot" id="cFoot">LAYER · —</div>
+      </div>
+    </div>
+    <button class="pull-btn" id="pull">抽 卡</button>
+  </div>
+
+  <div class="sec-title">已 抽 出 的 线 索</div>
+  <div class="grid" id="collection"></div>
+
+  <div class="sec-title">未 解 锁 · 反 转 保 护</div>
+  <div class="locked-note">以下层级受剧情进度封锁。镜门开启前不可见——它们守护着双书房诡计与现实的真相。</div>
+  <div class="lockgrid" id="locked"></div>
+
+  <footer>无喙镜渊 · 单文件线索卡 · 暗调赛博新中式</footer>
+</div>
+
+<script>
+/* ===== 剧情进度（模拟 DM 控制的解锁节点）===== */
+const STAGES = [
+  {key:'act1',  name:'第一幕',        maxLayer:1, note:'仅第一层·公共案件可抽。'},
+  {key:'pre',   name:'第三幕·镜门前',  maxLayer:2, note:'追加第二层·行动冲突。'},
+  {key:'mirror',name:'镜门后',        maxLayer:3, note:'镜门开启，可抽第三层·镜后现场。'},
+  {key:'end',   name:'终局',          maxLayer:4, note:'全部线索释放，含第四层·现实责任。'}
+];
+let curStage = STAGES[0];
+
+/* ===== 线索卡数据（首版仅第一层真实内容，二~四层为占位演示）===== */
+const CARDS = [
+  {layer:1, tag:'现场·尸体', title:'审判之尸',
+   body:'陆驰寂伏尸于书房中央。他被缚坐在椅上，双手反剪于椅背，姿态如受审。致命伤在颈侧，创缘整齐，血已干涸呈暗褐。尸表别无挣扎抓痕，仿佛至死都未离开座位。',
+   foot:'LAYER · 1 / 公共案件'},
+  {layer:1, tag:'现场·门', title:'复原的门',
+   body:'书房与回廊间的门框边缘，有新近焊补的痕，漆色与周遭不一。门内侧是一面单面镜——从回廊能看见书房，从书房却看不见回廊。这扇门，像是被人拆下又装了回去。',
+   foot:'LAYER · 1 / 公共案件'},
+  {layer:1, tag:'现场·通道', title:'一次暴力开启',
+   body:'北翼一处防火门，有单次外力撞破的痕迹：锁舌变形、门框木屑新鲜。有人曾在此强行通过一次，此后这门再没被打开过。',
+   foot:'LAYER · 1 / 公共案件'},
+  {layer:1, tag:'空间·公共', title:'静夜园·北翼',
+   body:'庄园北翼三层。西、中、东三处轨道位上，书房是可整体平移的箱体。中央喷泉水池是整座建筑的几何中心——水面之下，另有通路。',
+   foot:'LAYER · 1 / 公共案件'}
+];
+const LAYER_NAMES = {1:'第一层 · 公共案件',2:'第二层 · 行动冲突',3:'第三层 · 镜后现场',4:'第四层 · 现实责任'};
+
+let drawnIds = new Set();
+
+/* ===== 渲染进度条 ===== */
+function renderProgress(){
+  const box = document.getElementById('progress');
+  box.innerHTML = '';
+  STAGES.forEach(s=>{
+    const b=document.createElement('button');
+    b.className='pbtn'+(s.key===curStage.key?' on':'');
+    b.textContent=s.name;
+    b.onclick=()=>{curStage=s;drawnIds.clear();document.getElementById('collection').innerHTML='';renderAll();};
+    box.appendChild(b);
+  });
+  document.getElementById('hint').textContent='当前：'+curStage.name+' — '+curStage.note;
+}
+
+/* ===== 抽卡 ===== */
+function pull(){
+  const pool = CARDS.filter(c=>c.layer<=curStage.maxLayer && !drawnIds.has(c.title));
+  const btn=document.getElementById('pull');
+  if(pool.length===0){ btn.textContent='本层已抽尽'; btn.disabled=true; return; }
+  const c = pool[Math.floor(Math.random()*pool.length)];
+  drawnIds.add(c.title);
+  const card=document.getElementById('card');
+  // 翻转动画：先翻走再翻入
+  card.style.transform='rotateY(90deg)';
+  setTimeout(()=>{
+    document.getElementById('cTag').textContent=c.tag;
+    document.getElementById('cTitle').textContent=c.title;
+    document.getElementById('cBody').textContent=c.body;
+    document.getElementById('cFoot').textContent=c.foot;
+    card.style.transform='rotateY(0deg)';
+  },330);
+  addToCollection(c);
+  if(drawnIds.size>=CARDS.filter(x=>x.layer<=curStage.maxLayer).length){
+    btn.textContent='本层已抽尽'; btn.disabled=true;
+  }
+}
+
+function addToCollection(c){
+  const col=document.getElementById('collection');
+  const d=document.createElement('div');d.className='mini';
+  d.innerHTML='<div class="mt">'+c.title+'</div><div class="mb">'+c.body+'</div><span class="mtag">'+c.tag+'</span>';
+  col.prepend(d);
+}
+
+/* ===== 未解锁层占位（反转保护演示）===== */
+function renderLocked(){
+  const box=document.getElementById('locked');box.innerHTML='';
+  for(let L=curStage.maxLayer+1; L<=4; L++){
+    const el=document.createElement('div');el.className='lock';
+    el.innerHTML='???<small>'+LAYER_NAMES[L]+' · 镜门开启前不可见</small>';
+    box.appendChild(el);
+  }
+  if(curStage.maxLayer>=4){box.innerHTML='<div class="locked-note" style="margin:0">所有层级已解锁。</div>';}
+}
+
+function renderAll(){
+  renderProgress();renderLocked();
+  const btn=document.getElementById('pull');btn.disabled=false;btn.textContent='抽 卡';
+  document.getElementById('cTag').textContent='公共案件';
+  document.getElementById('cTitle').textContent='镜渊未启';
+  document.getElementById('cBody').textContent='点击下方「抽卡」，从已解锁的线索层中揭出一张。';
+  document.getElementById('cFoot').textContent='LAYER · —';
+}
+document.getElementById('pull').addEventListener('click',pull);
+renderAll();
+</script>
+</body>
+</html>
