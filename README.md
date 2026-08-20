@@ -4,11 +4,12 @@
 
 ## 直接体验
 
+- [公开 Demo（GitHub Pages）](https://58wpg9fr7d-code.github.io/jingye-garden-interactive-mystery/)
 - [项目首页](./index.html)
 - [侦探卷宗 MVP](./web/detective-case.html)
 - [线索卡 MVP](./web/clue-cards.html)
 
-两个页面均为无后端静态 MVP，可直接在浏览器打开，也可部署到 GitHub Pages。原 Railway 地址 `https://jingyeyuan-mystery-production.up.railway.app/phone` 当前未能在本次核查中返回页面，因此不把它作为已验证 Demo。
+公开入口和两个页面均为无后端静态 MVP，可直接在浏览器打开。原 Railway 地址 `https://jingyeyuan-mystery-production.up.railway.app/phone` 当前未能在本次核查中返回页面，因此不把它作为已验证 Demo。
 
 ## 产品能力
 

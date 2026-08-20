@@ -1,9 +1,10 @@
 # Links
 
-- 公开展示首页：待 GitHub Pages 发布后填写
+- 公开展示首页：<https://58wpg9fr7d-code.github.io/jingye-garden-interactive-mystery/>
 - 侦探卷宗 MVP：`web/detective-case.html`
 - 线索卡 MVP：`web/clue-cards.html`
 - 历史 Railway 地址：`https://jingyeyuan-mystery-production.up.railway.app/phone`（本轮访问超时，待重新部署或恢复）
+- GitHub 源码：<https://github.com/58wpg9fr7d-code/jingye-garden-interactive-mystery>
 
 ## 发布原则
 
