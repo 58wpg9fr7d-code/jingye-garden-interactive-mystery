@@ -4,12 +4,13 @@
 
 ## 直接体验
 
+- [原主站（Vercel）](https://murder-mystery-studio.vercel.app/phone)
 - [公开 Demo（GitHub Pages）](https://58wpg9fr7d-code.github.io/jingye-garden-interactive-mystery/)
 - [项目首页](./index.html)
 - [侦探卷宗 MVP](./web/detective-case.html)
 - [线索卡 MVP](./web/clue-cards.html)
 
-公开入口和两个页面均为无后端静态 MVP，可直接在浏览器打开。原 Railway 地址 `https://jingyeyuan-mystery-production.up.railway.app/phone` 当前未能在本次核查中返回页面，因此不把它作为已验证 Demo。
+原主站 Vercel 入口可直接在浏览器打开；GitHub Pages 版本是从原始设计材料恢复的无后端静态备份，用于稳定展示卷宗、线索卡和项目结构。历史 Railway 地址 `https://jingyeyuan-mystery-production.up.railway.app/phone` 作为备用记录保留，不作为主 Demo。
 
 ## 产品能力
 
@@ -39,4 +40,4 @@ python3 -m http.server 8000
 
 ## 个人贡献与边界
 
-项目从世界观、角色关系、信息分级、玩法机制、交互结构、视觉素材整理到网页 MVP 均由本人独立完成；AI 仅作为辅助开发和整理工具。当前公开仓库展示的是已经恢复并整理的静态交互 MVP，不宣称 Railway 全量应用在本次核查中仍然可用。
+项目从世界观、角色关系、信息分级、玩法机制、交互结构、视觉素材整理到网页 MVP 均由本人独立完成；AI 仅作为辅助开发和整理工具。仓库同时保留原主站入口与可公开访问的静态备份，明确区分原完整产品和恢复展示版本。
