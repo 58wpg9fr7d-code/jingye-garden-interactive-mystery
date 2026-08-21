@@ -1,0 +1,10 @@
+.social-screen{padding-top:12px;overflow-y:auto;max-height:680px;padding-bottom:26px}
+.social-screen .social-top{position:sticky;top:0;z-index:3;background:#0d1017eF;backdrop-filter:blur(10px);padding:10px 0;border-bottom:1px solid #ffffff12}
+.social-screen .social-profile{padding:11px 0 13px}
+.social-screen .social-avatar{width:34px;height:34px;border-radius:50%;font-size:14px}
+.social-screen .social-profile b{font-size:11px}.social-screen .social-profile small{font-size:8px}
+.social-screen .post-card{display:flex;flex-direction:column;padding:7px;border-radius:12px;margin:0;background:#151821;border:1px solid #ffffff0d;break-inside:avoid}
+.social-screen .post-card p{font-size:8px;line-height:1.45;margin:4px 0}.social-screen .post-card>b{font-size:9px;line-height:1.35}.social-screen .post-card small{font-size:7px;color:#727989}
+.social-screen .social-evidence-image{width:100%;height:auto;max-height:none;border-radius:9px;margin-bottom:7px}
+.social-screen .post-image{height:96px;border-radius:9px;margin-bottom:7px;font-size:13px}
+.social-feed{columns:2 150px;column-gap:7px;align-items:start}.social-feed>.post-card{margin-bottom:7px}

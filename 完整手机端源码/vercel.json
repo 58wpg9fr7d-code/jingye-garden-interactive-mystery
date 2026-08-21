@@ -1,0 +1,13 @@
+{
+  "framework": null,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist/client",
+  "functions": {
+    "api/index.mjs": {
+      "includeFiles": "dist/server/**,dist/client/**"
+    }
+  },
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api/index.mjs" }
+  ]
+}

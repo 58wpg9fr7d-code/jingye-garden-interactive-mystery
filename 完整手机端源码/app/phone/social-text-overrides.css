@@ -1,0 +1,6 @@
+.social-feed{column-width:145px;column-gap:8px}
+.social-feed .post-card b,.social-feed .post-card p,.social-feed .post-card small{overflow-wrap:anywhere;word-break:break-word}
+.social-feed .post-card b{font-size:10px;line-height:1.45;font-weight:700;color:#eef0f5}
+.social-feed .post-card p{font-size:9px;line-height:1.6;color:#aeb4c0}
+.social-feed .post-card small{font-size:8px;line-height:1.4;margin-top:2px}
+@media(max-width:360px){.social-feed{column-width:132px;column-gap:6px}.social-feed .post-card{padding:6px}.social-feed .post-card b{font-size:9px}.social-feed .post-card p{font-size:8px}}

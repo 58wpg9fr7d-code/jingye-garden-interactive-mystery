@@ -1,0 +1,2055 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; style-src 'unsafe-inline' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; img-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; media-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; worker-src blob:; connect-src blob: data:; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Vector Lock</title>
+<style>:root{color-scheme:light dark;background:light-dark(rgb(255 255 255), rgb(24 24 24))}html,body{width:100%;height:100%;margin:0;overflow:hidden}body{box-sizing:border-box;padding:0;background:inherit}iframe{display:block;width:100%;max-width:none;height:100vh;margin:0;border:0}</style>
+</head>
+<body>
+<iframe sandbox="allow-scripts" referrerpolicy="no-referrer" title="Vector Lock" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+&lt;meta charset=&quot;utf-8&quot;&gt;
+&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+&lt;meta name=&quot;referrer&quot; content=&quot;no-referrer&quot;&gt;
+&lt;meta http-equiv=&quot;Content-Security-Policy&quot; content=&quot;default-src &#x27;none&#x27;; script-src &#x27;unsafe-inline&#x27; &#x27;unsafe-eval&#x27; &#x27;wasm-unsafe-eval&#x27; blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; style-src &#x27;unsafe-inline&#x27; blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; img-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; media-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; worker-src blob:; connect-src blob: data:; frame-src &#x27;none&#x27;; object-src &#x27;none&#x27;; base-uri &#x27;none&#x27;; form-action &#x27;none&#x27;&quot;&gt;
+&lt;title&gt;Vector Lock&lt;/title&gt;
+&lt;style&gt;:root {
+  color-scheme: light dark;
+  background-color: var(--background) !important;
+
+  /* Agent-facing contract; keep in sync with SKILL.md. */
+  --background: light-dark(rgb(255 255 255), rgb(24 24 24));
+  --foreground: light-dark(rgb(26 28 31), rgb(255 255 255));
+  --card: color-mix(in oklab, var(--foreground) 5%, transparent);
+  --card-foreground: var(--foreground);
+  --popover: light-dark(rgb(255 255 255), rgb(45 45 45));
+  --popover-foreground: var(--foreground);
+  --primary: light-dark(rgb(51 156 255), rgb(131 195 255));
+  --primary-foreground: light-dark(rgb(255 255 255), rgb(13 13 13));
+  --secondary: light-dark(rgb(255 255 255 / 96%), rgb(54 54 54 / 96%));
+  --secondary-foreground: var(--foreground);
+  --muted: color-mix(in srgb, var(--foreground) 10%, transparent);
+  --muted-foreground: light-dark(
+    rgb(26 28 31 / 49.4%),
+    rgb(255 255 255 / 49.8%)
+  );
+  --accent: light-dark(rgb(229 242 255), rgb(13 39 63));
+  --accent-foreground: var(--primary);
+  --destructive: light-dark(rgb(226 85 7), rgb(255 133 73));
+  --border: light-dark(rgb(26 28 31 / 8%), rgb(255 255 255 / 8.2%));
+  --input: light-dark(
+    rgb(26 28 31 / 11.8%),
+    color-mix(in oklab, rgb(0 0 0) 10%, transparent)
+  );
+  --ring: light-dark(rgb(51 156 255), rgb(131 195 255 / 76%));
+  --font-size-base: 14px;
+  --viz-series-1: var(--primary);
+  --viz-series-2: light-dark(rgb(243 136 59), rgb(245 154 86));
+  --viz-series-3: light-dark(rgb(93 201 119), rgb(116 213 139));
+  --viz-series-4: light-dark(rgb(235 119 177), rgb(240 143 192));
+  --viz-series-5: light-dark(rgb(155 121 236), rgb(170 145 239));
+  --viz-series-6: light-dark(rgb(58 185 177), rgb(90 203 194));
+
+  /* Internal implementation variables; not part of the agent contract. */
+  --font-sans: -apple-system, system-ui, &quot;Segoe UI&quot;, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, &quot;SF Mono&quot;, Menlo, Consolas, &quot;Liberation Mono&quot;,
+    monospace;
+  --font-size-normal: max(11px, var(--font-size-base));
+  --font-size-tooltip: calc(var(--font-size-base) - 1px);
+  --font-size-small: max(11px, calc(var(--font-size-base) - 2px));
+  --font-size-h1: calc(var(--font-size-normal) * 1.7142857143);
+  --font-size-h2: calc(var(--font-size-normal) * 1.4285714286);
+  --font-size-h3: calc(var(--font-size-normal) * 1.2857142857);
+  --font-weight-normal: 430;
+  --font-weight-medium: 500;
+  --line-height-normal: calc(var(--font-size-normal) * 1.5);
+  --line-height-tooltip: calc(var(--font-size-tooltip) * 1.4285714286);
+  --line-height-small: calc(var(--font-size-small) + 4px);
+  --radius: 12.5px;
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-2xl: calc(var(--radius) * 1.6);
+  --radius-full: 9999px;
+  --shadow-sm: 0 1px 2px -1px rgb(0 0 0 / 8%);
+  --checkmark-image: url(&quot;data:image/svg+xml,%3Csvg xmlns=&#x27;http://www.w3.org/2000/svg&#x27; viewBox=&#x27;0 0 17 17&#x27;%3E%3Cpath d=&#x27;M12.8961 3.64101C13.1297 3.41418 13.4984 3.37523 13.7779 3.56581C14.0571 3.75635 14.1554 4.11331 14.0299 4.41347L13.9615 4.53847L7.71151 13.7045C7.59411 13.8767 7.4063 13.9877 7.19881 14.0072C6.99136 14.0267 6.78564 13.9533 6.63826 13.806L2.88826 10.056L2.79842 9.9457C2.6192 9.67407 2.64927 9.30496 2.88826 9.06581C3.12738 8.82669 3.49647 8.79676 3.76815 8.97597L3.8785 9.06581L7.03084 12.2182L12.8053 3.74941L12.8961 3.64101Z&#x27;/%3E%3C/svg%3E&quot;);
+
+  /* Legacy aliases; not part of the current agent contract. */
+  --viz-bg: transparent;
+  --viz-panel: var(--card);
+  --viz-border: var(--border);
+  --viz-text: var(--foreground);
+  --viz-muted: var(--muted-foreground);
+  --viz-accent: var(--primary);
+  --viz-accent-text: var(--primary-foreground);
+  --viz-accent-bg: var(--accent);
+  --viz-font-size: var(--font-size-base);
+  --viz-warning: var(--destructive);
+  --color-background-primary: var(--background);
+  --color-text-primary: var(--foreground);
+  --color-border-secondary: var(--border);
+}
+
+:root[data-theme=&quot;light&quot;] {
+  color-scheme: light;
+}
+
+:root[data-theme=&quot;dark&quot;] {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html &gt; body {
+  margin: 0;
+  padding: 5px;
+  color: var(--foreground);
+  background: transparent !important;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-normal);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-normal);
+}
+
+a {
+  color: color-mix(in srgb, var(--viz-accent) 80%, var(--viz-text) 20%);
+  cursor: pointer;
+  font-weight: var(--viz-font-weight-medium);
+  text-decoration: none;
+  text-underline-offset: 2px;
+}
+
+a:is(:hover, :focus-visible) {
+  text-decoration-line: underline;
+  text-decoration-style: dashed;
+  text-decoration-thickness: 0.5px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin-block: 0;
+}
+
+h1 {
+  font-size: var(--font-size-h1);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h2 {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h3,
+h4,
+h5,
+h6 {
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.3;
+}
+
+b,
+strong,
+th {
+  font-weight: var(--font-weight-medium);
+}
+
+code:not(pre code) {
+  display: inline;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  corner-shape: superellipse(1.5);
+  background: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  overflow-wrap: anywhere;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  word-break: break-word;
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--foreground);
+  font: inherit;
+  text-align: start;
+}
+
+.table :is(th, td) {
+  padding-block: 10px;
+  padding-inline: 0 24px;
+  overflow-wrap: anywhere;
+  border-bottom: 1px solid var(--border);
+  text-align: start;
+  vertical-align: top;
+}
+
+.table-responsive &gt; .table :is(th, td) {
+  overflow-wrap: break-word;
+}
+
+.table :is(th, td):last-child {
+  padding-inline-end: 0;
+}
+
+.table :is(caption, thead th) {
+  font-weight: 600;
+}
+
+.table thead th {
+  padding-block: 8px;
+  border-bottom-color: color-mix(in srgb, var(--foreground) 16%, transparent);
+}
+
+.table tbody tr:last-child :is(th, td) {
+  border-bottom: 0;
+}
+
+.table.table-sm :is(th, td) {
+  padding-block: 6px;
+}
+
+.table.table-sm :is(th, td):not(:last-child) {
+  padding-inline-end: 16px;
+}
+
+.table :is(.text-end, [align=&quot;right&quot;]) {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.table :is(.text-center, [align=&quot;center&quot;]) {
+  text-align: center;
+}
+
+.table .text-nowrap {
+  white-space: nowrap;
+}
+
+#widget {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  background: transparent !important;
+}
+
+.card {
+  min-width: 0;
+  padding: 12px;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  border-radius: var(--radius-2xl);
+  corner-shape: superellipse(1.5);
+  color: var(--card-foreground);
+  background: var(--card);
+}
+
+#widget &gt; :not(.card) {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.tooltip {
+  position: fixed;
+  z-index: 50;
+  top: 0;
+  left: 0;
+  width: max-content;
+  max-width: min(
+    20rem,
+    var(--tooltip-available-width, calc(100vw - 10px)),
+    calc(100vw - 10px)
+  );
+  max-height: min(
+    var(--tooltip-available-height, calc(100vh - 10px)),
+    calc(100vh - 10px)
+  );
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--popover-foreground);
+  background: var(--popover);
+  box-shadow: none;
+  font-size: var(--font-size-tooltip);
+  line-height: var(--line-height-tooltip);
+  overflow-wrap: break-word;
+  white-space: normal;
+  pointer-events: none;
+  user-select: none;
+}
+
+.viz-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(max(180px, 24%), 1fr));
+  gap: 10px;
+}
+
+.viz-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.viz-stat-value {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+.viz-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.viz-badge {
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  color: var(--accent-foreground);
+  background: var(--accent);
+  font-weight: var(--font-weight-medium);
+}
+
+small,
+.text-small,
+.viz-badge {
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-small);
+}
+
+.text-muted {
+  color: var(--muted-foreground);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.viz-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.viz-controls &gt; .form-label {
+  display: grid;
+  min-width: min(100%, 260px);
+  flex: 1 1 280px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 2px 12px;
+  margin-bottom: 0;
+}
+
+.viz-controls &gt; .form-label &gt; :is(.form-control, .form-range, .form-select) {
+  grid-column: 1 / -1;
+}
+
+.btn,
+.form-check-input,
+.form-control,
+.form-range,
+.form-select {
+  font: inherit;
+}
+
+.btn {
+  appearance: button;
+  display: inline-flex;
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0 8px;
+  -webkit-app-region: no-drag;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: var(--cursor-interaction, pointer);
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.btn:is(.btn-block, .viz-tile) {
+  inline-size: 100%;
+}
+
+.btn.viz-tile {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+a.btn {
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.btn-primary {
+  border-color: transparent;
+  color: var(--primary-foreground);
+  background: var(--foreground);
+  background-clip: padding-box;
+}
+
+.btn-primary .text-muted {
+  color: color-mix(in srgb, var(--primary-foreground) 50%, transparent);
+}
+
+.btn-primary:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 80%, transparent);
+  background-clip: padding-box;
+}
+
+.btn-ghost {
+  border-color: transparent;
+  color: var(--muted-foreground);
+  background: transparent;
+}
+
+.btn-ghost:not(:disabled):hover {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+[data-lucide] {
+  stroke-width: 1.6;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--foreground);
+}
+
+.form-control {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  padding: 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--foreground);
+  background: var(--secondary);
+}
+
+.form-control::placeholder {
+  color: var(--muted-foreground);
+}
+
+.form-control[type=&quot;file&quot;] {
+  padding: 0;
+  overflow: hidden;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control[type=&quot;file&quot;]::file-selector-button {
+  min-height: 26px;
+  margin-right: 8px;
+  padding: 0 8px;
+  border: 0;
+  border-right: 1px solid var(--input);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: inherit;
+  font: inherit;
+}
+
+.form-control[type=&quot;file&quot;]:not(:disabled):hover::file-selector-button {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-control-color[type=&quot;color&quot;] {
+  width: 40px;
+  height: 28px;
+  padding: 3px;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control-color[type=&quot;color&quot;]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.form-control-color[type=&quot;color&quot;]::-webkit-color-swatch {
+  border: 0;
+  border-radius: calc(var(--radius-lg) - 4px);
+  corner-shape: superellipse(1.5);
+}
+
+textarea.form-control {
+  height: auto;
+  min-height: 72px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+.form-control:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-control:disabled,
+.form-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.form-select {
+  appearance: none;
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  margin: 0;
+  padding: 0 32px 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--foreground);
+  background-color: var(--secondary);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted-foreground) 50%),
+    linear-gradient(135deg, var(--muted-foreground) 50%, transparent 50%);
+  background-position:
+    calc(100% - 14px) 50%,
+    calc(100% - 10px) 50%;
+  background-repeat: no-repeat;
+  background-size: 4px 4px;
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-select:not(:disabled):hover {
+  background-color: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-select:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-check {
+  display: flex;
+  min-height: 20px;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-check-input {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  margin: 0;
+  border: 1px solid var(--input);
+  color: var(--primary-foreground);
+  background-color: transparent;
+  cursor: var(--cursor-interaction, default);
+  transition:
+    background-color 150ms,
+    border-color 150ms,
+    box-shadow 150ms;
+}
+
+.form-check:not(.form-switch) .form-check-input[type=&quot;checkbox&quot;] {
+  border-color: var(--input);
+  border-radius: var(--radius-sm);
+  corner-shape: superellipse(1.5);
+  background-color: var(--secondary);
+  box-shadow: var(--shadow-sm);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input:not(:disabled):not(:checked):hover {
+  background-color: var(--card);
+}
+
+.form-check:not(.form-switch) .form-check-input[type=&quot;checkbox&quot;]:checked {
+  border-color: var(--primary);
+  background-color: var(--primary);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input[type=&quot;checkbox&quot;]:checked::before {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--primary-foreground);
+  content: &quot;&quot;;
+  mask: var(--checkmark-image) center / 12px 12px no-repeat;
+}
+
+.form-check-input[type=&quot;radio&quot;] {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-full);
+}
+
+.form-check-input[type=&quot;radio&quot;]:checked {
+  border: 2px solid var(--primary);
+  background:
+    radial-gradient(circle, var(--primary-foreground) 0 2.5px, transparent 3px),
+    var(--primary);
+}
+
+.form-check:not(.form-switch) .form-check-input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+}
+
+.form-switch .form-check-input:disabled,
+.form-switch .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.form-check-label {
+  color: var(--foreground);
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-switch .form-check-input {
+  position: relative;
+  width: 32px;
+  height: 20px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--muted);
+  box-shadow: none;
+  transition: background-color 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input::before {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border: 1px solid light-dark(var(--primary-foreground), var(--foreground));
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+  box-shadow: var(--shadow-sm);
+  content: &quot;&quot;;
+  transform: translate(2px, -50%);
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input:checked {
+  background: var(--primary);
+}
+
+.form-switch .form-check-input:checked::before {
+  transform: translate(14px, -50%);
+}
+
+.form-switch .form-check-input:focus-visible {
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+.form-range {
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 28px;
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  outline: none;
+  border: 0;
+  accent-color: var(--primary);
+  background: linear-gradient(
+      color-mix(in srgb, var(--foreground) 7%, transparent),
+      color-mix(in srgb, var(--foreground) 7%, transparent)
+    )
+    center / 100% 2px no-repeat;
+}
+
+.form-range::-webkit-slider-runnable-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-webkit-slider-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range::-moz-range-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-moz-range-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.btn:not(.btn-primary, .viz-tile):is(
+    [aria-pressed=&quot;true&quot;],
+    [aria-selected=&quot;true&quot;],
+    .is-selected
+  ) {
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+  background: var(--primary);
+}
+
+.btn.viz-tile:is([aria-pressed=&quot;true&quot;], [aria-selected=&quot;true&quot;], .is-selected) {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+#widget &gt; svg {
+  width: 100%;
+}
+
+.text-warning,
+.text-destructive {
+  color: var(--destructive);
+}
+
+html&gt;body{padding:0}&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;div id=&quot;fine-line-puzzle&quot;&gt;
+  &lt;div class=&quot;flp-layout&quot;&gt;
+    &lt;div class=&quot;card flp-model flp-scene&quot;&gt;
+      &lt;canvas id=&quot;flp-model-canvas&quot; aria-label=&quot;可拖动旋转的三维密室装置&quot;&gt;&lt;/canvas&gt;
+      &lt;div class=&quot;flp-projector&quot; aria-hidden=&quot;true&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;/div&gt;
+      &lt;div class=&quot;flp-light-beam&quot; aria-hidden=&quot;true&quot;&gt;&lt;/div&gt;
+      &lt;div class=&quot;flp-scene-title&quot;&gt;&lt;span&gt;无六骰／熵增立方&lt;/span&gt;&lt;code id=&quot;flp-angle&quot;&gt;θx .62 · θy −.84 · θz .41&lt;/code&gt;&lt;/div&gt;
+      &lt;div class=&quot;flp-die&quot;&gt;
+        &lt;span class=&quot;text-muted&quot;&gt;朝前骰面自动识别&lt;/span&gt;
+        &lt;div class=&quot;flp-net&quot; aria-label=&quot;五个骰面姿态记录器&quot;&gt;
+          &lt;button class=&quot;btn flp-face flp-f1 is-selected&quot; data-face=&quot;0&quot; type=&quot;button&quot;&gt;⚀&lt;/button&gt;
+          &lt;button class=&quot;btn flp-face flp-f2&quot; data-face=&quot;1&quot; type=&quot;button&quot;&gt;⚁&lt;/button&gt;
+          &lt;button class=&quot;btn flp-face flp-f3&quot; data-face=&quot;2&quot; type=&quot;button&quot;&gt;⚂&lt;/button&gt;
+          &lt;button class=&quot;btn flp-face flp-f4&quot; data-face=&quot;3&quot; type=&quot;button&quot;&gt;⚃&lt;/button&gt;
+          &lt;button class=&quot;btn flp-face flp-f5&quot; data-face=&quot;4&quot; type=&quot;button&quot;&gt;⚄&lt;/button&gt;
+          &lt;div class=&quot;flp-missing&quot;&gt;×&lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+      &lt;div class=&quot;flp-wall-label&quot;&gt;&lt;span&gt;投影门&lt;/span&gt;&lt;code id=&quot;flp-state&quot;&gt;实时投影&lt;/code&gt;&lt;/div&gt;
+      &lt;div class=&quot;flp-doorway&quot; aria-hidden=&quot;true&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;/div&gt;
+      &lt;div class=&quot;flp-door&quot; id=&quot;flp-door&quot;&gt;
+        &lt;canvas id=&quot;flp-shadow-canvas&quot; aria-label=&quot;持续显示乱线投影的白色门&quot;&gt;&lt;/canvas&gt;
+        &lt;span class=&quot;flp-door-seam&quot; aria-hidden=&quot;true&quot;&gt;&lt;/span&gt;
+        &lt;span class=&quot;flp-door-panels&quot; aria-hidden=&quot;true&quot;&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;/span&gt;
+        &lt;span class=&quot;flp-door-handle&quot; aria-hidden=&quot;true&quot;&gt;&lt;/span&gt;
+      &lt;/div&gt;
+      &lt;div class=&quot;flp-flash&quot; id=&quot;flp-flash&quot; aria-hidden=&quot;true&quot;&gt;&lt;/div&gt;
+      &lt;figure class=&quot;flp-capture-preview&quot; id=&quot;flp-capture-preview&quot; aria-hidden=&quot;true&quot;&gt;&lt;/figure&gt;
+      &lt;div class=&quot;flp-controls&quot;&gt;
+        &lt;button class=&quot;btn&quot; data-turn=&quot;up&quot; type=&quot;button&quot;&gt;↑&lt;/button&gt;
+        &lt;button class=&quot;btn&quot; data-turn=&quot;left&quot; type=&quot;button&quot;&gt;←&lt;/button&gt;
+        &lt;button class=&quot;btn&quot; data-turn=&quot;right&quot; type=&quot;button&quot;&gt;→&lt;/button&gt;
+        &lt;button class=&quot;btn&quot; data-turn=&quot;down&quot; type=&quot;button&quot;&gt;↓&lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;div class=&quot;flp-footer&quot;&gt;
+    &lt;div class=&quot;flp-slots&quot; aria-label=&quot;记录的五个数字&quot;&gt;
+      &lt;span data-slot=&quot;0&quot;&gt;?&lt;/span&gt;&lt;span data-slot=&quot;1&quot;&gt;?&lt;/span&gt;&lt;span data-slot=&quot;2&quot;&gt;?&lt;/span&gt;&lt;span data-slot=&quot;3&quot;&gt;?&lt;/span&gt;&lt;span data-slot=&quot;4&quot;&gt;?&lt;/span&gt;
+    &lt;/div&gt;
+    &lt;span class=&quot;text-muted&quot; id=&quot;flp-lock-state&quot; aria-live=&quot;polite&quot;&gt;拍下五张照片后自动打开手机密码界面&lt;/span&gt;
+  &lt;/div&gt;
+
+  &lt;div class=&quot;flp-photos&quot; id=&quot;flp-photos&quot; aria-label=&quot;已经拍摄的数字照片&quot;&gt;&lt;/div&gt;
+
+  &lt;div class=&quot;card flp-output&quot; id=&quot;flp-output&quot; hidden&gt;
+    &lt;span class=&quot;text-muted&quot;&gt;NO.6 / TALOS / AFTERIMAGE&lt;/span&gt;
+    &lt;code&gt;τ::Q⁻¹⟦48·668⟧ / ∫Ω p⃗(x,y,z)dV → Iθ ; ΔS↗ ; Iθ≠I₀&lt;/code&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+
+&lt;style&gt;
+  #fine-line-puzzle { color: var(--foreground); width: 100%; }
+  #fine-line-puzzle .flp-layout {
+    display: grid;
+    grid-template-columns: 190px minmax(300px, 1.1fr) minmax(260px, .8fr);
+    gap: 10px;
+  }
+  #fine-line-puzzle .flp-die { padding: 10px 0; }
+  #fine-line-puzzle .flp-net {
+    margin-top: 12px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 3px;
+  }
+  #fine-line-puzzle .flp-face {
+    position: relative;
+    min-width: 0;
+    padding: 0;
+    overflow: hidden;
+    font-size: 28px;
+    line-height: 1;
+    border-style: dashed;
+  }
+  #fine-line-puzzle .flp-face i {
+    position: absolute;
+    left: 9px;
+    right: 9px;
+    top: 50%;
+    height: 1px;
+    background: var(--viz-series-1);
+    transform-origin: center;
+    pointer-events: none;
+  }
+  #fine-line-puzzle .flp-f1 i { transform: rotate(18deg); }
+  #fine-line-puzzle .flp-f2 i { transform: rotate(-27deg); }
+  #fine-line-puzzle .flp-f3 i { transform: rotate(36deg); }
+  #fine-line-puzzle .flp-f4 i { transform: rotate(11deg); }
+  #fine-line-puzzle .flp-f5 i { transform: rotate(-32deg); }
+  #fine-line-puzzle .flp-missing {
+    min-height: 44px;
+    display: grid;
+    place-items: center;
+    border: 1px dashed var(--border);
+    color: var(--destructive);
+  }
+  #fine-line-puzzle .flp-counts {
+    display: grid;
+    gap: 6px;
+    margin-top: 20px;
+  }
+  #fine-line-puzzle .flp-counts b {
+    display: inline-block;
+    width: 34px;
+    color: var(--foreground);
+    font-weight: 500;
+  }
+  #fine-line-puzzle .flp-model,
+  #fine-line-puzzle .flp-shadow {
+    position: relative;
+    padding: 0;
+    overflow: hidden;
+    min-height: 390px;
+  }
+  #fine-line-puzzle .flp-model { touch-action: none; cursor: grab; }
+  #fine-line-puzzle .flp-model:active { cursor: grabbing; }
+  #fine-line-puzzle canvas { display: block; width: 100%; height: 335px; }
+  #fine-line-puzzle #flp-shadow-canvas {
+    background:
+      radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--muted) 76%, transparent), transparent 62%),
+      var(--card);
+  }
+  #fine-line-puzzle .flp-label {
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 0 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  #fine-line-puzzle .flp-label code { color: var(--muted-foreground); }
+  #fine-line-puzzle .flp-controls {
+    min-height: 48px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    border-top: 1px solid var(--border);
+  }
+  #fine-line-puzzle .flp-footer {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  #fine-line-puzzle .flp-slots { display: flex; gap: 7px; }
+  #fine-line-puzzle .flp-slots span {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 44px;
+    border-bottom: 2px solid var(--border);
+    font-variant-numeric: tabular-nums;
+  }
+  #fine-line-puzzle .flp-slots span:nth-child(1) { color: var(--viz-series-1); }
+  #fine-line-puzzle .flp-slots span:nth-child(2) { color: var(--viz-series-2); }
+  #fine-line-puzzle .flp-slots span:nth-child(3) { color: var(--viz-series-3); }
+  #fine-line-puzzle .flp-slots span:nth-child(4) { color: var(--viz-series-4); }
+  #fine-line-puzzle .flp-slots span:nth-child(5) { color: var(--viz-series-5); }
+  #fine-line-puzzle .flp-output { margin-top: 12px; }
+  #fine-line-puzzle .flp-output code {
+    display: block;
+    margin-top: 8px;
+    overflow-wrap: anywhere;
+  }
+  @media (max-width: 700px) {
+    #fine-line-puzzle .flp-layout { grid-template-columns: 1fr; }
+    #fine-line-puzzle .flp-die { display: grid; grid-template-columns: auto 1fr; gap: 12px; }
+    #fine-line-puzzle .flp-counts { margin-top: 12px; }
+  }
+
+  /* One continuous 3D room: sculpture, die and projection wall share a stage. */
+  #fine-line-puzzle .flp-layout { display: block; }
+  #fine-line-puzzle .flp-scene {
+    position: relative;
+    width: 100%;
+    height: 560px;
+    min-height: 560px;
+    overflow: hidden;
+    padding: 0;
+    isolation: isolate;
+    background:
+      radial-gradient(ellipse at 26% 45%, color-mix(in srgb, var(--viz-series-1) 9%, transparent), transparent 30%),
+      linear-gradient(180deg, color-mix(in srgb, var(--foreground) 4%, var(--background)) 0 55%, color-mix(in srgb, var(--foreground) 8%, var(--background)) 100%);
+    touch-action: none;
+    cursor: grab;
+  }
+  #fine-line-puzzle .flp-scene:active { cursor: grabbing; }
+  #fine-line-puzzle .flp-scene::before {
+    content: &quot;&quot;;
+    position: absolute;
+    z-index: 0;
+    left: -8%;
+    right: -8%;
+    bottom: -31%;
+    height: 70%;
+    opacity: .34;
+    transform: perspective(520px) rotateX(62deg);
+    transform-origin: center top;
+    background:
+      repeating-linear-gradient(90deg, color-mix(in srgb, var(--foreground) 12%, transparent) 0 1px, transparent 1px 48px),
+      repeating-linear-gradient(0deg, color-mix(in srgb, var(--foreground) 12%, transparent) 0 1px, transparent 1px 48px);
+    pointer-events: none;
+  }
+  #fine-line-puzzle #flp-model-canvas {
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+    user-select: none;
+  }
+  #fine-line-puzzle .flp-projector {
+    position: absolute;
+    z-index: 2;
+    left: 7%;
+    top: 46%;
+    width: 42px;
+    height: 30px;
+    border: 1px solid color-mix(in srgb, var(--foreground) 26%, transparent);
+    background: color-mix(in srgb, var(--background) 72%, var(--foreground));
+    transform: perspective(260px) rotateY(-22deg) rotateZ(-4deg);
+    box-shadow: -8px 10px 18px color-mix(in srgb, var(--background) 46%, transparent);
+    pointer-events: none;
+  }
+  #fine-line-puzzle .flp-projector::before {
+    content: &quot;&quot;;
+    position: absolute;
+    left: -12px;
+    top: 8px;
+    width: 16px;
+    height: 14px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--background) 58%, var(--foreground));
+  }
+  #fine-line-puzzle .flp-projector span {
+    position: absolute;
+    right: -9px;
+    top: 6px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--foreground);
+    box-shadow:
+      0 0 10px color-mix(in srgb, var(--foreground) 70%, transparent),
+      0 0 24px color-mix(in srgb, var(--viz-series-1) 34%, transparent);
+  }
+  #fine-line-puzzle .flp-light-beam {
+    position: absolute;
+    z-index: 1;
+    left: 10%;
+    top: 116px;
+    width: 82%;
+    height: 360px;
+    opacity: .16;
+    clip-path: polygon(0 45%, 100% 0, 100% 100%, 0 55%);
+    background:
+      linear-gradient(90deg, color-mix(in srgb, var(--foreground) 62%, transparent), color-mix(in srgb, var(--foreground) 13%, transparent) 72%, transparent);
+    filter: blur(8px);
+    pointer-events: none;
+  }
+  #fine-line-puzzle .flp-door,
+  #fine-line-puzzle .flp-doorway {
+    position: absolute;
+    top: 86px;
+    right: 16px;
+    width: 39%;
+    height: 400px;
+  }
+  #fine-line-puzzle .flp-doorway {
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--foreground) 18%, transparent);
+    background:
+      radial-gradient(ellipse at center, color-mix(in srgb, var(--viz-series-1) 18%, transparent), transparent 56%),
+      color-mix(in srgb, var(--background) 84%, var(--foreground));
+    background:
+      radial-gradient(ellipse at 52% 48%, color-mix(in srgb, var(--viz-series-1) 10%, transparent), transparent 34%),
+      linear-gradient(90deg, color-mix(in srgb, var(--background) 92%, var(--foreground)), var(--background));
+  }
+  #fine-line-puzzle .flp-door {
+    z-index: 2;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--foreground) 18%, transparent);
+    background: var(--foreground);
+    box-shadow:
+      inset 0 0 60px color-mix(in srgb, var(--foreground) 4%, transparent),
+      10px 14px 28px color-mix(in srgb, var(--background) 34%, transparent);
+    transform: perspective(880px) rotateY(-8deg) skewY(-1deg);
+    transform-origin: left center;
+    transition: transform 1.45s cubic-bezier(.2,.72,.16,1), opacity 1.2s ease, box-shadow 1.2s ease;
+    pointer-events: none;
+  }
+  #fine-line-puzzle .flp-door.is-opening {
+    transform: perspective(880px) rotateY(-102deg) skewY(-1deg);
+    opacity: .22;
+    box-shadow: 24px 18px 42px color-mix(in srgb, var(--background) 58%, transparent);
+  }
+  #fine-line-puzzle.is-unlocked .flp-door { display: none; }
+  #fine-line-puzzle.is-unlocked .flp-doorway::before {
+    content: &quot;&quot;;
+    position: absolute;
+    inset: 7% 10%;
+    border: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
+    box-shadow:
+      inset 0 0 46px color-mix(in srgb, var(--background) 72%, transparent),
+      0 0 36px color-mix(in srgb, var(--viz-series-1) 8%, transparent);
+    transform: perspective(480px) rotateX(2deg);
+  }
+  #fine-line-puzzle.is-unlocked .flp-doorway::after {
+    content: &quot;&quot;;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 8%;
+    height: 96%;
+    top: 2%;
+    background: color-mix(in srgb, var(--foreground) 88%, var(--background));
+    box-shadow: 9px 0 24px color-mix(in srgb, var(--background) 62%, transparent);
+    clip-path: polygon(0 2%, 100% 0, 76% 100%, 0 97%);
+  }
+  #fine-line-puzzle #flp-shadow-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--foreground);
+    pointer-events: none;
+  }
+  #fine-line-puzzle .flp-door-seam {
+    position: absolute;
+    inset: 8px;
+    border: 2px solid color-mix(in srgb, var(--background) 11%, transparent);
+    box-shadow:
+      inset 3px 3px 7px color-mix(in srgb, var(--background) 8%, transparent),
+      inset -2px -2px 5px color-mix(in srgb, var(--foreground) 52%, transparent);
+    pointer-events: none;
+  }
+  #fine-line-puzzle .flp-door-panels {
+    position: absolute;
+    inset: 38px 34px 26px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1.18fr .92fr;
+    gap: 40px 24px;
+    pointer-events: none;
+  }
+  #fine-line-puzzle .flp-door-panels i {
+    border: 1px solid color-mix(in srgb, var(--background) 16%, transparent);
+    box-shadow:
+      inset 3px 3px 7px color-mix(in srgb, var(--background) 8%, transparent),
+      inset -3px -3px 6px color-mix(in srgb, var(--foreground) 46%, transparent),
+      1px 1px 2px color-mix(in srgb, var(--foreground) 40%, transparent);
+  }
+  #fine-line-puzzle .flp-door-handle {
+    position: absolute;
+    left: 16px;
+    top: 52%;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--background) 72%, var(--foreground));
+    box-shadow:
+      0 0 0 4px color-mix(in srgb, var(--background) 13%, transparent),
+      1px 2px 4px color-mix(in srgb, var(--background) 30%, transparent);
+    pointer-events: none;
+  }
+  #fine-line-puzzle .flp-door-handle::after {
+    content: &quot;&quot;;
+    position: absolute;
+    left: 7px;
+    top: 4px;
+    width: 27px;
+    height: 5px;
+    border-radius: 4px 1px 1px 4px;
+    transform: rotate(3deg);
+    transform-origin: left center;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--foreground) 35%, var(--background)), color-mix(in srgb, var(--background) 76%, var(--foreground)));
+    box-shadow: 1px 2px 3px color-mix(in srgb, var(--background) 32%, transparent);
+  }
+  #fine-line-puzzle .flp-scene-title,
+  #fine-line-puzzle .flp-wall-label {
+    position: absolute;
+    z-index: 4;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    color: var(--foreground);
+  }
+  #fine-line-puzzle .flp-scene-title { top: 18px; left: 20px; }
+  #fine-line-puzzle .flp-scene-title code,
+  #fine-line-puzzle .flp-wall-label code { color: var(--muted-foreground); }
+  #fine-line-puzzle .flp-wall-label { top: 58px; right: 22px; }
+  #fine-line-puzzle .flp-die {
+    position: absolute;
+    z-index: 5;
+    top: 54px;
+    left: 20px;
+    padding: 10px;
+    border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+    background: color-mix(in srgb, var(--background) 76%, transparent);
+    backdrop-filter: blur(8px);
+  }
+  #fine-line-puzzle .flp-flash {
+    position: absolute;
+    z-index: 9;
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+    background: var(--foreground);
+  }
+  #fine-line-puzzle .flp-flash.is-firing {
+    animation: flp-shutter .54s ease-out;
+  }
+  #fine-line-puzzle .flp-capture-preview {
+    position: absolute;
+    z-index: 8;
+    right: 44px;
+    bottom: 16px;
+    width: 92px;
+    margin: 0;
+    padding: 5px 5px 8px;
+    opacity: 0;
+    pointer-events: none;
+    background: color-mix(in srgb, var(--foreground) 92%, var(--background));
+    color: var(--background);
+    box-shadow: 0 16px 34px color-mix(in srgb, var(--background) 46%, transparent);
+  }
+  #fine-line-puzzle .flp-capture-preview img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+  }
+  #fine-line-puzzle .flp-capture-preview figcaption {
+    margin-top: 5px;
+    text-align: center;
+    font-family: ui-monospace, monospace;
+  }
+  #fine-line-puzzle .flp-capture-preview.is-ejecting {
+    animation: flp-preview-eject 1.15s cubic-bezier(.2,.75,.18,1) forwards;
+  }
+  #fine-line-puzzle .flp-photos {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 14px;
+    min-height: 0;
+    perspective: 900px;
+  }
+  #fine-line-puzzle .flp-photo {
+    margin: 0;
+    padding: 7px 7px 11px;
+    border: 1px solid color-mix(in srgb, var(--foreground) 18%, transparent);
+    background: color-mix(in srgb, var(--foreground) 92%, var(--background));
+    color: var(--background);
+    box-shadow: 0 12px 28px color-mix(in srgb, var(--background) 35%, transparent);
+    transform: translateY(-18px) rotate(var(--photo-tilt, 0deg)) scale(.92);
+    opacity: 0;
+    animation: flp-photo-drop .62s cubic-bezier(.2,.8,.2,1) .12s forwards;
+  }
+  #fine-line-puzzle .flp-photo img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 11 / 16;
+    object-fit: contain;
+    background: var(--background);
+  }
+  #fine-line-puzzle .flp-photo figcaption {
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+    margin-top: 7px;
+    font-family: ui-monospace, monospace;
+  }
+  @keyframes flp-shutter {
+    0% { opacity: 0; }
+    12% { opacity: .92; }
+    30% { opacity: .16; }
+    45% { opacity: .52; }
+    100% { opacity: 0; }
+  }
+  @keyframes flp-photo-drop {
+    to { transform: translateY(0) rotate(var(--photo-tilt, 0deg)) scale(1); opacity: 1; }
+  }
+  @keyframes flp-preview-eject {
+    0% { opacity: 0; transform: translateY(-88px) rotate(-2deg) scale(.76); }
+    22% { opacity: 1; }
+    72% { opacity: 1; transform: translateY(0) rotate(1.5deg) scale(1); }
+    100% { opacity: 0; transform: translateY(12px) rotate(1.5deg) scale(.96); }
+  }
+  #fine-line-puzzle .flp-net {
+    margin-top: 8px;
+    display: grid;
+    grid-template-columns: repeat(6, 40px);
+    gap: 5px;
+  }
+  #fine-line-puzzle .flp-face,
+  #fine-line-puzzle .flp-missing {
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    min-height: 40px;
+    padding: 0;
+    font-size: 21px;
+  }
+  #fine-line-puzzle .flp-controls {
+    position: absolute;
+    z-index: 5;
+    left: 50%;
+    bottom: 18px;
+    min-height: 44px;
+    padding: 0 8px;
+    transform: translateX(-50%);
+    border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+    background: color-mix(in srgb, var(--background) 78%, transparent);
+    backdrop-filter: blur(8px);
+  }
+  @media (max-width: 600px) {
+    #fine-line-puzzle .flp-scene { height: 690px; min-height: 690px; }
+    #fine-line-puzzle .flp-die { left: 10px; right: 10px; }
+    #fine-line-puzzle .flp-net { grid-template-columns: repeat(6, 1fr); }
+    #fine-line-puzzle .flp-face,
+    #fine-line-puzzle .flp-missing { width: 100%; min-width: 0; }
+    #fine-line-puzzle #flp-model-canvas { height: 440px; }
+    #fine-line-puzzle .flp-door,
+    #fine-line-puzzle .flp-doorway {
+      top: 420px;
+      left: 18px;
+      right: 18px;
+      width: calc(100% - 36px);
+      height: 205px;
+      transform: perspective(880px) rotateX(3deg);
+    }
+    #fine-line-puzzle .flp-door.is-opening { transform: perspective(880px) rotateY(-102deg); }
+    #fine-line-puzzle .flp-wall-label { top: 394px; right: 22px; }
+    #fine-line-puzzle .flp-photos { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    #fine-line-puzzle .flp-projector,
+    #fine-line-puzzle .flp-light-beam { display: none; }
+  }
+&lt;/style&gt;
+
+&lt;script&gt;
+  (() =&gt; {
+    const root = document.getElementById(&#x27;fine-line-puzzle&#x27;);
+    const modelCanvas = root.querySelector(&#x27;#flp-model-canvas&#x27;);
+    const shadowCanvas = root.querySelector(&#x27;#flp-shadow-canvas&#x27;);
+    const modelContext = modelCanvas.getContext(&#x27;2d&#x27;);
+    const shadowContext = shadowCanvas.getContext(&#x27;2d&#x27;);
+    const projectionDistance = 5.6;
+    const targets = [
+      { pitch: 0, yaw: 0, roll: 0, digit: &#x27;4&#x27;, offsetX: -.12, offsetY: .08 },
+      { pitch: 0, yaw: -67 * Math.PI / 180, roll: 0, digit: &#x27;8&#x27;, offsetX: .10, offsetY: -.05 },
+      { pitch: 58 * Math.PI / 180, yaw: 0, roll: 0, digit: &#x27;6&#x27;, offsetX: -.08, offsetY: -.11 },
+      { pitch: 0, yaw: -51 * Math.PI / 180, roll: 0, digit: &#x27;6&#x27;, offsetX: .12, offsetY: .09 },
+      { pitch: 43 * Math.PI / 180, yaw: 0, roll: 0, digit: &#x27;8&#x27;, offsetX: -.04, offsetY: .06 }
+    ];
+    const segmentPositions = {
+      a: [-.55, -.88, .55, -.88], g: [-.55, 0, .55, 0], d: [-.55, .88, .55, .88],
+      f: [-.66, -.78, -.66, -.08], b: [.66, -.78, .66, -.08],
+      e: [-.66, .08, -.66, .78], c: [.66, .08, .66, .78]
+    };
+    const patterns = {
+      &#x27;4&#x27;: [&#x27;f&#x27;, &#x27;g&#x27;, &#x27;b&#x27;, &#x27;c&#x27;],
+      &#x27;8&#x27;: [&#x27;a&#x27;, &#x27;b&#x27;, &#x27;c&#x27;, &#x27;d&#x27;, &#x27;e&#x27;, &#x27;f&#x27;, &#x27;g&#x27;],
+      &#x27;6&#x27;: [&#x27;a&#x27;, &#x27;f&#x27;, &#x27;g&#x27;, &#x27;e&#x27;, &#x27;d&#x27;, &#x27;c&#x27;]
+    };
+    const pseudo = (index) =&gt; {
+      const value = Math.sin(index * 91.73 + 17.11) * 43758.5453;
+      return value - Math.floor(value);
+    };
+    const rotate = (point, pitch, yaw, roll) =&gt; {
+      const cy = Math.cos(yaw), sy = Math.sin(yaw);
+      const x1 = point.x * cy - point.z * sy;
+      const z1 = point.x * sy + point.z * cy;
+      const cx = Math.cos(pitch), sx = Math.sin(pitch);
+      const y1 = point.y * cx - z1 * sx;
+      const z2 = point.y * sx + z1 * cx;
+      const cz = Math.cos(roll), sz = Math.sin(roll);
+      return { x: x1 * cz - y1 * sz, y: x1 * sz + y1 * cz, z: z2 };
+    };
+    const inverseRotate = (point, pitch, yaw, roll) =&gt; {
+      const cz = Math.cos(-roll), sz = Math.sin(-roll);
+      const x1 = point.x * cz - point.y * sz;
+      const y1 = point.x * sz + point.y * cz;
+      const cx = Math.cos(-pitch), sx = Math.sin(-pitch);
+      const y2 = y1 * cx - point.z * sx;
+      const z1 = y1 * sx + point.z * cx;
+      const cy = Math.cos(-yaw), sy = Math.sin(-yaw);
+      return { x: x1 * cy - z1 * sy, y: y2, z: x1 * sy + z1 * cy };
+    };
+    const quaternionMultiply = (a, b) =&gt; ({
+      w: a.w*b.w - a.x*b.x - a.y*b.y - a.z*b.z,
+      x: a.w*b.x + a.x*b.w + a.y*b.z - a.z*b.y,
+      y: a.w*b.y - a.x*b.z + a.y*b.w + a.z*b.x,
+      z: a.w*b.z + a.x*b.y - a.y*b.x + a.z*b.w
+    });
+    const quaternionNormalize = (q) =&gt; {
+      const length = Math.hypot(q.w, q.x, q.y, q.z) || 1;
+      return { w:q.w/length, x:q.x/length, y:q.y/length, z:q.z/length };
+    };
+    const quaternionAxisAngle = (axis, angle) =&gt; {
+      const half = angle / 2, sine = Math.sin(half);
+      return quaternionNormalize({ w:Math.cos(half), x:axis.x*sine, y:axis.y*sine, z:axis.z*sine });
+    };
+    const quaternionFromEuler = (pitch, yaw, roll) =&gt; {
+      const qx = quaternionAxisAngle({x:1,y:0,z:0}, pitch);
+      const qy = quaternionAxisAngle({x:0,y:1,z:0}, -yaw);
+      const qz = quaternionAxisAngle({x:0,y:0,z:1}, roll);
+      return quaternionNormalize(quaternionMultiply(qz, quaternionMultiply(qx, qy)));
+    };
+    const rotateQuaternion = (point, q) =&gt; {
+      const vector = { w:0, x:point.x, y:point.y, z:point.z };
+      const inverse = { w:q.w, x:-q.x, y:-q.y, z:-q.z };
+      const result = quaternionMultiply(quaternionMultiply(q, vector), inverse);
+      return { x:result.x, y:result.y, z:result.z };
+    };
+    const eulerFromQuaternion = (q) =&gt; {
+      const r12 = 2 * (q.x*q.y - q.z*q.w);
+      const r22 = 1 - 2 * (q.x*q.x + q.z*q.z);
+      const r31 = 2 * (q.x*q.z - q.y*q.w);
+      const r32 = 2 * (q.y*q.z + q.x*q.w);
+      const r33 = 1 - 2 * (q.x*q.x + q.y*q.y);
+      const pitch = Math.asin(Math.max(-1, Math.min(1, r32)));
+      return { pitch, yaw:Math.atan2(r31, r33), roll:Math.atan2(-r12, r22) };
+    };
+    const points = [], edges = [];
+    const addEdge = (pointA, pointB, kind, weight = 1, primary = false, targetIndex) =&gt; {
+      const a = points.push(pointA) - 1;
+      const b = points.push(pointB) - 1;
+      edges.push({ a, b, kind, weight, primary, targetIndex });
+    };
+    targets.forEach((target, faceIndex) =&gt; {
+      patterns[target.digit].forEach((key, segmentIndex) =&gt; {
+        const s = segmentPositions[key];
+        [[0, .18], [.27, .66], [.76, 1]].forEach((range, fragmentIndex) =&gt; {
+          const lengthShift = (pseudo(faceIndex*73 + segmentIndex*19 + fragmentIndex*11)-.5)*.14;
+          const variedTo = Math.max(range[0]+.1, Math.min(1, range[1]+lengthShift));
+          const seed = faceIndex * 101 + segmentIndex * 17 + fragmentIndex * 7;
+          const desiredAX = s[0] + target.offsetX + (s[2] - s[0]) * range[0] + (pseudo(seed+701)-.5)*.055;
+          const desiredAY = s[1] + target.offsetY + (s[3] - s[1]) * range[0] + (pseudo(seed+733)-.5)*.07;
+          const desiredBX = s[0] + target.offsetX + (s[2] - s[0]) * variedTo + (pseudo(seed+769)-.5)*.055;
+          const desiredBY = s[1] + target.offsetY + (s[3] - s[1]) * variedTo + (pseudo(seed+797)-.5)*.07;
+          const depthA = -1.15 + pseudo(seed + 311) * 2.3;
+          const depthB = -1.15 + pseudo(seed + 487) * 2.3;
+          const localA = { x: desiredAX * (projectionDistance - depthA) / projectionDistance, y: desiredAY * (projectionDistance - depthA) / projectionDistance, z: depthA };
+          const localB = { x: desiredBX * (projectionDistance - depthB) / projectionDistance, y: desiredBY * (projectionDistance - depthB) / projectionDistance, z: depthB };
+          const a = points.push(inverseRotate(localA, target.pitch, target.yaw, target.roll)) - 1;
+          const b = points.push(inverseRotate(localB, target.pitch, target.yaw, target.roll)) - 1;
+          edges.push({ a, b, kind: &#x27;vector&#x27;, weight: .72 + ((segmentIndex + fragmentIndex + faceIndex) % 3) * .12, primary: true, dashed: pseudo(seed+601)&gt;.68, targetIndex: faceIndex });
+        });
+      });
+    });
+    for (let i = 0; i &lt; 260; i += 1) {
+      const a = Math.floor(pseudo(i + 53) * points.length);
+      const denseBundle = i &lt; 178;
+      const jump = denseBundle ? 1 + Math.floor(pseudo(i + 71) * 8) : 18 + Math.floor(pseudo(i + 71) * 58);
+      const b = (a + jump) % points.length;
+      edges.push({ a, b, kind: &#x27;noise&#x27;, weight: denseBundle ? .1 + pseudo(i + 89) * .24 : .06 + pseudo(i + 89) * .12, primary: false });
+    }
+    const size = .44, dieOffsetX = 4.25, dieFaces = [];
+    const makeFace = (corners, pipCount, colorIndex) =&gt; {
+      const faceRecord = { corners, pipCount, colorIndex, pipCenters: [] };
+      dieFaces.push(faceRecord);
+      for (let i = 0; i &lt; 4; i += 1) addEdge(corners[i], corners[(i + 1) % 4], &#x27;die&#x27;, 1.25, false, colorIndex);
+      const pipMap = {
+        1: [[.5, .5]], 2: [[.28, .28], [.72, .72]], 3: [[.26, .26], [.5, .5], [.74, .74]],
+        4: [[.27, .27], [.73, .27], [.27, .73], [.73, .73]],
+        5: [[.25, .25], [.75, .25], [.5, .5], [.25, .75], [.75, .75]]
+      };
+      const interpolate = (u, v) =&gt; ({
+        x: corners[0].x * (1-u)*(1-v) + corners[1].x*u*(1-v) + corners[2].x*u*v + corners[3].x*(1-u)*v,
+        y: corners[0].y * (1-u)*(1-v) + corners[1].y*u*(1-v) + corners[2].y*u*v + corners[3].y*(1-u)*v,
+        z: corners[0].z * (1-u)*(1-v) + corners[1].z*u*(1-v) + corners[2].z*u*v + corners[3].z*(1-u)*v
+      });
+      pipMap[pipCount].forEach(([u,v]) =&gt; {
+        const p = interpolate(u,v);
+        faceRecord.pipCenters.push(p);
+      });
+    };
+    const center = [{x:dieOffsetX-size,y:-size,z:0},{x:dieOffsetX+size,y:-size,z:0},{x:dieOffsetX+size,y:size,z:0},{x:dieOffsetX-size,y:size,z:0}];
+    const flap = (a,b,e) =&gt; [a,b,{x:b.x+e.x,y:b.y+e.y,z:b.z+e.z},{x:a.x+e.x,y:a.y+e.y,z:a.z+e.z}];
+    makeFace(center,1,0);
+    makeFace(flap(center[0],center[1],{x:0,y:-2*size*Math.cos(58*Math.PI/180),z:2*size*Math.sin(58*Math.PI/180)}),3,2);
+    makeFace(flap(center[2],center[3],{x:0,y:2*size*Math.cos(43*Math.PI/180),z:-2*size*Math.sin(43*Math.PI/180)}),5,4);
+    makeFace(flap(center[3],center[0],{x:-2*size*Math.cos(67*Math.PI/180),y:0,z:-2*size*Math.sin(67*Math.PI/180)}),2,1);
+    makeFace(flap(center[1],center[2],{x:2*size*Math.cos(51*Math.PI/180),y:0,z:2*size*Math.sin(51*Math.PI/180)}),4,3);
+    const tear = {x:dieOffsetX+size+2*size*Math.cos(51*Math.PI/180),y:.15,z:2*size*Math.sin(51*Math.PI/180)};
+    for (let i=0;i&lt;9;i+=1) {
+      const offset=(i-4)*.12;
+      addEdge({x:tear.x,y:tear.y+offset,z:tear.z+pseudo(i+900)*.12},{x:tear.x+.28+pseudo(i+930)*.35,y:tear.y+offset+(pseudo(i+960)-.5)*.24,z:tear.z+(pseudo(i+990)-.5)*.6},&#x27;torn&#x27;,.9);
+    }
+    const rotation = { pitch: .62, yaw: -.84, roll: 0 };
+    let orientation = quaternionFromEuler(rotation.pitch, rotation.yaw, rotation.roll);
+    const solved = [null, null, null, null, null];
+    let selected = 0, dragging = false, pointer = { x:0, y:0 };
+    const normalize = (angle) =&gt; {
+      let value = angle % (Math.PI * 2);
+      if (value &gt; Math.PI) value -= Math.PI * 2;
+      if (value &lt; -Math.PI) value += Math.PI * 2;
+      return value;
+    };
+    const diff = (a, b) =&gt; Math.abs(normalize(a - b));
+    const closeness = () =&gt; {
+      const t = targets[selected];
+      return Math.max(0, 1 - Math.hypot(diff(rotation.pitch, t.pitch), diff(rotation.yaw, t.yaw)) / 2.35);
+    };
+    const fit = (canvas) =&gt; {
+      const ratio = Math.min(window.devicePixelRatio || 1, 2);
+      const rect = canvas.getBoundingClientRect();
+      const nextWidth = Math.round(rect.width * ratio);
+      const nextHeight = Math.round(rect.height * ratio);
+      if (canvas.width !== nextWidth) canvas.width = nextWidth;
+      if (canvas.height !== nextHeight) canvas.height = nextHeight;
+      return { ratio, width: rect.width, height: rect.height };
+    };
+    const resolveThemeColor = (token, fallback) =&gt; {
+      const probe = document.createElement(&#x27;span&#x27;);
+      probe.style.color = &#x27;var(&#x27; + token + &#x27;)&#x27;;
+      probe.style.display = &#x27;none&#x27;;
+      root.append(probe);
+      const value = getComputedStyle(probe).color || fallback;
+      probe.remove();
+      return value;
+    };
+    const palette = {
+      ink: getComputedStyle(root).color.trim() || &#x27;#ddd&#x27;,
+      roomBackground: resolveThemeColor(&#x27;--background&#x27;, &#x27;#181818&#x27;),
+      accent: resolveThemeColor(&#x27;--viz-series-1&#x27;, &#x27;#b77d57&#x27;),
+      digitColors: [1,2,3,4,5].map((number) =&gt; resolveThemeColor(&#x27;--viz-series-&#x27; + number, getComputedStyle(root).color.trim() || &#x27;#ddd&#x27;))
+    };
+    const captureCurrentPose = () =&gt; {
+      if (solved[selected]) return;
+      const digit = targets[selected].digit;
+      solved[selected] = digit;
+      root.querySelector(&#x27;[data-slot=&quot;&#x27; + selected + &#x27;&quot;]&#x27;).textContent = digit;
+      const solvedCount = solved.filter(Boolean).length;
+      root.querySelector(&#x27;#flp-state&#x27;).textContent = &#x27;已自动拍摄 &#x27; + solvedCount + &#x27;/5&#x27;;
+      const flash = root.querySelector(&#x27;#flp-flash&#x27;);
+      flash.classList.remove(&#x27;is-firing&#x27;);
+      void flash.offsetWidth;
+      flash.classList.add(&#x27;is-firing&#x27;);
+      const photo = document.createElement(&#x27;figure&#x27;);
+      photo.className = &#x27;flp-photo&#x27;;
+      photo.dataset.face = String(selected);
+      photo.style.setProperty(&#x27;--photo-tilt&#x27;, ((pseudo(selected + 840) - .5) * 5).toFixed(2) + &#x27;deg&#x27;);
+      const image = document.createElement(&#x27;img&#x27;);
+      image.src = shadowCanvas.toDataURL(&#x27;image/png&#x27;);
+      image.alt = &#x27;第&#x27; + (selected + 1) + &#x27;观察面拍摄的乱线数字照片&#x27;;
+      const caption = document.createElement(&#x27;figcaption&#x27;);
+      caption.innerHTML = &#x27;&lt;span&gt;FACE 0&#x27; + (selected + 1) + &#x27;&lt;/span&gt;&lt;span&gt;θ CAPTURE&lt;/span&gt;&#x27;;
+      photo.append(image, caption);
+      const photoStrip = root.querySelector(&#x27;#flp-photos&#x27;);
+      const nextPhoto = [...photoStrip.children].find((item) =&gt; Number(item.dataset.face) &gt; selected);
+      photoStrip.insertBefore(photo, nextPhoto || null);
+      const preview = root.querySelector(&#x27;#flp-capture-preview&#x27;);
+      const previewImage = image.cloneNode();
+      preview.innerHTML = &#x27;&#x27;;
+      preview.append(previewImage, caption.cloneNode(true));
+      preview.classList.remove(&#x27;is-ejecting&#x27;);
+      void preview.offsetWidth;
+      preview.classList.add(&#x27;is-ejecting&#x27;);
+      requestAnimationFrame(() =&gt; photo.scrollIntoView({ behavior: &#x27;smooth&#x27;, block: &#x27;nearest&#x27; }));
+      if (solvedCount === 5) {
+        root.querySelector(&#x27;#flp-state&#x27;).textContent = &#x27;照片收集完成 · 5 秒后输入密码&#x27;;
+        root.classList.add(&#x27;is-unlocked&#x27;);
+        const photos = [...photoStrip.querySelectorAll(&#x27;img&#x27;)].map((item) =&gt; item.src);
+        window.setTimeout(() =&gt; window.top.postMessage({
+          type: &#x27;vector-puzzle-complete&#x27;,
+          code: solved.join(&#x27;&#x27;),
+          photos
+        }, &#x27;*&#x27;), 5000);
+      }
+    };
+    const drawProjectedStrands = (context, edge, index, a, b, scale, amount, color, quality = 1) =&gt; {
+      if (amount &lt;= 0) return;
+      const ax = a.x * scale, ay = a.y * scale;
+      const bx = b.x * scale, by = b.y * scale;
+      const dx = bx - ax, dy = by - ay;
+      const length = Math.hypot(dx, dy) || 1;
+      const nx = -dy / length, ny = dx / length;
+      const strands = quality &lt; 1 ? 2 : 5 + Math.floor(pseudo(index * 37 + edge.targetIndex * 101) * 5) + Math.round(amount * 2);
+      const stepCount = quality &lt; 1 ? 4 : 8;
+      context.save();
+      context.lineCap = &#x27;round&#x27;;
+      context.lineJoin = &#x27;round&#x27;;
+      for (let strand = 0; strand &lt; strands; strand += 1) {
+        const seed = edge.targetIndex * 10000 + index * 83 + strand * 17;
+        const offset = (pseudo(seed + 1) - .5) * 7;
+        const wave = 1.2 + pseudo(seed + 2) * 4.6;
+        const phase = pseudo(seed + 3) * Math.PI * 2;
+        context.beginPath();
+        for (let step = 0; step &lt;= stepCount; step += 1) {
+          const t = step / stepCount;
+          const taper = Math.sin(Math.PI * t);
+          const wobble = offset + Math.sin(t * Math.PI * (1.4 + pseudo(seed + 4) * 3.1) + phase) * wave * taper;
+          const along = (pseudo(seed + step + 40) - .5) * 1.8;
+          const x = ax + dx * t + nx * wobble + dx / length * along;
+          const y = ay + dy * t + ny * wobble + dy / length * along;
+          if (step === 0) context.moveTo(x, y); else context.lineTo(x, y);
+        }
+        context.strokeStyle = color;
+        context.globalAlpha = amount * (.09 + pseudo(seed + 5) * .16);
+        context.lineWidth = .45 + pseudo(seed + 6) * .65;
+        context.setLineDash(strand % 6 === 2 ? [2 + pseudo(seed + 7) * 5, 2 + pseudo(seed + 8) * 4] : []);
+        context.stroke();
+      }
+      context.beginPath();
+      context.setLineDash([]);
+      context.moveTo(ax, ay);
+      context.lineTo(bx, by);
+      context.strokeStyle = color;
+      context.globalAlpha = amount * .28;
+      context.lineWidth = .72;
+      context.stroke();
+      context.restore();
+    };
+    const draw = () =&gt; {
+      const { ink, roomBackground, accent, digitColors } = palette;
+      const modelSize = fit(modelCanvas), shadowSize = fit(shadowCanvas);
+      const projected = points.map((point) =&gt; {
+        if (point.x &lt; 2.25) return rotateQuaternion(point, orientation);
+        const local = { x: point.x - dieOffsetX, y: point.y, z: point.z };
+        const spun = rotateQuaternion(local, orientation);
+        return { x: spun.x + dieOffsetX, y: spun.y, z: spun.z };
+      });
+      const faceScores = dieFaces.map((face) =&gt; {
+        const origin = face.corners[0], u = face.corners[1], v = face.corners[3];
+        const edgeU = { x:u.x-origin.x, y:u.y-origin.y, z:u.z-origin.z };
+        const edgeV = { x:v.x-origin.x, y:v.y-origin.y, z:v.z-origin.z };
+        const normal = {
+          x:edgeU.y*edgeV.z-edgeU.z*edgeV.y,
+          y:edgeU.z*edgeV.x-edgeU.x*edgeV.z,
+          z:edgeU.x*edgeV.y-edgeU.y*edgeV.x
+        };
+        const facing = rotateQuaternion(normal, orientation);
+        return { index:face.colorIndex, score:Math.abs(facing.z) / (Math.hypot(facing.x, facing.y, facing.z) || 1) };
+      }).sort((a,b) =&gt; b.score-a.score);
+      const detectedFace = faceScores[0];
+      if (detectedFace.score &gt;= .86 &amp;&amp; detectedFace.index !== selected) {
+        selected = detectedFace.index;
+        root.querySelectorAll(&#x27;[data-face]&#x27;).forEach((item) =&gt; item.classList.toggle(&#x27;is-selected&#x27;, Number(item.dataset.face) === selected));
+      }
+      const perspective = (point) =&gt; {
+        const factor = projectionDistance / Math.max(2.8, projectionDistance - point.z);
+        return { x: point.x * factor, y: point.y * factor, factor };
+      };
+      const screenPoints = projected.map(perspective);
+      const bounds = screenPoints.reduce((box, point) =&gt; ({
+        minX: Math.min(box.minX, point.x), maxX: Math.max(box.maxX, point.x),
+        minY: Math.min(box.minY, point.y), maxY: Math.max(box.maxY, point.y)
+      }), {minX:Infinity,maxX:-Infinity,minY:Infinity,maxY:-Infinity});
+      const stage = {left:48,right:modelSize.width*.55,top:150,bottom:modelSize.height-110};
+      const scale = Math.min((stage.right-stage.left)/Math.max(.1,bounds.maxX-bounds.minX),(stage.bottom-stage.top)/Math.max(.1,bounds.maxY-bounds.minY))*1.35;
+      const centerX=(stage.left+stage.right)/2-(bounds.minX+bounds.maxX)*scale/2;
+      const centerY=(stage.top+stage.bottom)/2-(bounds.minY+bounds.maxY)*scale/2;
+      modelContext.setTransform(1,0,0,1,0,0);
+      modelContext.clearRect(0,0,modelCanvas.width,modelCanvas.height);
+      modelContext.setTransform(modelSize.ratio, 0, 0, modelSize.ratio, centerX * modelSize.ratio, centerY * modelSize.ratio);
+      const activeFace = dieFaces.find((face) =&gt; face.colorIndex === selected) || dieFaces[0];
+      const activeCorners = activeFace.corners.map((point) =&gt; {
+        const local = { x: point.x - dieOffsetX, y: point.y, z: point.z };
+        const spun = rotateQuaternion(local, orientation);
+        return perspective({ x: spun.x + dieOffsetX, y: spun.y, z: spun.z });
+      });
+      modelContext.beginPath();
+      activeCorners.forEach((point, index) =&gt; index === 0 ? modelContext.moveTo(point.x * scale, point.y * scale) : modelContext.lineTo(point.x * scale, point.y * scale));
+      modelContext.closePath();
+      modelContext.fillStyle = digitColors[selected];
+      modelContext.globalAlpha = .09;
+      modelContext.fill();
+      [...edges].sort((a, b) =&gt; projected[a.a].z + projected[a.b].z - projected[b.a].z - projected[b.b].z).forEach((edge) =&gt; {
+        if (edge.kind === &#x27;torn&#x27;) return;
+        const a = projected[edge.a], b = projected[edge.b];
+        const screenA = perspective(a), screenB = perspective(b);
+        modelContext.beginPath(); modelContext.setLineDash(edge.dashed ? [3,4] : []); modelContext.moveTo(screenA.x * scale, screenA.y * scale); modelContext.lineTo(screenB.x * scale, screenB.y * scale);
+        const selectedDieFace = edge.kind === &#x27;die&#x27; &amp;&amp; edge.targetIndex === selected;
+        modelContext.strokeStyle = (edge.kind === &#x27;pip&#x27; &amp;&amp; edge.targetIndex !== undefined) || selectedDieFace ? digitColors[edge.targetIndex] : edge.kind === &#x27;torn&#x27; ? accent : ink;
+        modelContext.globalAlpha = edge.kind === &#x27;die&#x27; || edge.kind === &#x27;pip&#x27; ? .8 : Math.max(.08, (.42 + (a.z + b.z) * .08) * edge.weight);
+        modelContext.lineWidth = edge.kind === &#x27;die&#x27; ? selectedDieFace ? 2 : 1.05 : edge.kind === &#x27;pip&#x27; ? 1.65 : edge.primary ? .9 : .4; modelContext.stroke();
+      });
+      dieFaces.forEach((face) =&gt; {
+        const faceIndex = face.colorIndex;
+        modelContext.fillStyle = digitColors[faceIndex];
+        modelContext.globalAlpha = faceIndex === selected ? .96 : .58;
+        face.pipCenters.forEach((point) =&gt; {
+          const local = { x: point.x - dieOffsetX, y: point.y, z: point.z };
+          const spun = rotateQuaternion(local, orientation);
+          const projectedPip = perspective({ x: spun.x + dieOffsetX, y: spun.y, z: spun.z });
+          modelContext.beginPath();
+          modelContext.arc(projectedPip.x * scale, projectedPip.y * scale, faceIndex === selected ? 3.25 : 2.45, 0, Math.PI * 2);
+          modelContext.fill();
+        });
+      });
+      modelContext.setLineDash([]);
+      shadowContext.setTransform(1,0,0,1,0,0);
+      shadowContext.clearRect(0,0,shadowCanvas.width,shadowCanvas.height);
+      shadowContext.setTransform(shadowSize.ratio,0,0,shadowSize.ratio,0,0);
+      shadowContext.fillStyle=ink;
+      shadowContext.globalAlpha=.96;
+      shadowContext.fillRect(0,0,shadowSize.width,shadowSize.height);
+      shadowContext.setTransform(shadowSize.ratio, 0, 0, shadowSize.ratio, shadowSize.width * shadowSize.ratio / 2, shadowSize.height * shadowSize.ratio / 2);
+      const shadowScale = Math.min(shadowSize.width, shadowSize.height) * .205;
+      const score = closeness(), emerge = Math.max(0, Math.min(1, (score - .76) / .22));
+      edges.forEach((edge, index) =&gt; {
+        if (edge.kind === &#x27;torn&#x27;) return;
+        if (dragging &amp;&amp; edge.kind === &#x27;noise&#x27; &amp;&amp; index % 3 !== 0) return;
+        const a = projected[edge.a], b = projected[edge.b];
+        const projectedA = perspective(a), projectedB = perspective(b);
+        const isTargetLine = edge.kind === &#x27;vector&#x27; &amp;&amp; edge.targetIndex === selected;
+        const jitter = 2.4;
+        shadowContext.beginPath(); shadowContext.setLineDash(edge.dashed ? [3,4] : []);
+        shadowContext.moveTo(projectedA.x * shadowScale + Math.sin(index*.8+rotation.yaw)*jitter, projectedA.y * shadowScale);
+        shadowContext.lineTo(projectedB.x * shadowScale, projectedB.y * shadowScale + Math.cos(index+rotation.pitch)*jitter);
+        shadowContext.strokeStyle = roomBackground;
+        shadowContext.globalAlpha = (.065 + edge.weight*.085) * (.44 + (1-emerge)*.56);
+        shadowContext.lineWidth = edge.primary ? .48 : .34;
+        shadowContext.stroke();
+        if (isTargetLine) {
+          const quality = dragging ? .35 : 1;
+          drawProjectedStrands(shadowContext, edge, index, projectedA, projectedB, shadowScale, .38, roomBackground, quality);
+          drawProjectedStrands(shadowContext, edge, index, projectedA, projectedB, shadowScale, emerge, digitColors[selected], quality);
+        }
+      });
+      shadowContext.setLineDash([]);
+      const currentTarget = targets[selected];
+      const digitVisible = emerge &gt;= .24;
+      const sixFacesDown = currentTarget.digit !== &#x27;6&#x27; || diff(rotation.roll, currentTarget.roll) &lt;= 55 * Math.PI / 180;
+      if (!dragging &amp;&amp; digitVisible &amp;&amp; sixFacesDown &amp;&amp; !solved[selected]) {
+        captureCurrentPose();
+      } else if (!dragging &amp;&amp; digitVisible &amp;&amp; !sixFacesDown &amp;&amp; !solved[selected]) {
+        root.querySelector(&#x27;#flp-state&#x27;).textContent = &#x27;已识别 6 · 将数字底部朝下&#x27;;
+      } else if (!dragging &amp;&amp; !digitVisible &amp;&amp; !solved[selected]) {
+        const solvedCount = solved.filter(Boolean).length;
+        root.querySelector(&#x27;#flp-state&#x27;).textContent = solvedCount ? &#x27;已自动拍摄 &#x27; + solvedCount + &#x27;/5&#x27; : &#x27;实时投影&#x27;;
+      }
+      root.querySelector(&#x27;#flp-angle&#x27;).textContent = &#x27;θx &#x27; + rotation.pitch.toFixed(2) + &#x27; · θy &#x27; + rotation.yaw.toFixed(2) + &#x27; · θz &#x27; + rotation.roll.toFixed(2);
+    };
+    let pendingDraw = 0;
+    const requestDraw = () =&gt; {
+      if (pendingDraw) return;
+      pendingDraw = requestAnimationFrame(() =&gt; {
+        pendingDraw = 0;
+        draw();
+      });
+    };
+    const turn = (yaw, pitch, roll) =&gt; {
+      rotation.yaw = normalize(rotation.yaw + yaw);
+      rotation.pitch = Math.max(-1.4, Math.min(1.4, rotation.pitch + pitch));
+      rotation.roll = 0;
+      orientation = quaternionFromEuler(rotation.pitch, rotation.yaw, rotation.roll);
+      requestDraw();
+    };
+    const finishDrag = () =&gt; {
+      if (!dragging) return;
+      dragging = false;
+      requestDraw();
+    };
+    modelCanvas.addEventListener(&#x27;pointerdown&#x27;, (event) =&gt; {
+      dragging = true;
+      pointer = { x:event.clientX, y:event.clientY };
+      modelCanvas.setPointerCapture(event.pointerId);
+    });
+    modelCanvas.addEventListener(&#x27;pointermove&#x27;, (event) =&gt; {
+      if (!dragging) return;
+      const samples = event.getCoalescedEvents ? event.getCoalescedEvents() : [event];
+      const latest = samples[samples.length - 1] || event;
+      const dx = Math.max(-28, Math.min(28, latest.clientX - pointer.x));
+      const dy = Math.max(-28, Math.min(28, latest.clientY - pointer.y));
+      pointer = { x:latest.clientX, y:latest.clientY };
+      turn(dx * .0062, dy * .0062, 0);
+    });
+    modelCanvas.addEventListener(&#x27;pointerup&#x27;, finishDrag);
+    modelCanvas.addEventListener(&#x27;pointercancel&#x27;, finishDrag);
+    root.querySelectorAll(&#x27;[data-turn]&#x27;).forEach((button) =&gt; button.addEventListener(&#x27;click&#x27;, () =&gt; {
+      const action = button.dataset.turn, amount = .035;
+      if (action === &#x27;up&#x27;) turn(0, -amount, 0); if (action === &#x27;down&#x27;) turn(0, amount, 0);
+      if (action === &#x27;left&#x27;) turn(-amount, 0, 0); if (action === &#x27;right&#x27;) turn(amount, 0, 0);
+    }));
+    root.querySelectorAll(&#x27;[data-face]&#x27;).forEach((button) =&gt; button.addEventListener(&#x27;click&#x27;, () =&gt; {
+      selected = Number(button.dataset.face);
+      root.querySelectorAll(&#x27;[data-face]&#x27;).forEach((item) =&gt; item.classList.toggle(&#x27;is-selected&#x27;, item === button));
+      requestDraw();
+    }));
+    new ResizeObserver(requestDraw).observe(root);
+    draw();
+  })();
+&lt;/script&gt;
+
+&lt;script src=&quot;https://unpkg.com/@floating-ui/core@1.7.3/dist/floating-ui.core.umd.min.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;https://unpkg.com/@floating-ui/dom@1.7.4/dist/floating-ui.dom.umd.min.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+(() =&gt; {
+  if (window.FloatingUIDOM == null) {
+    return;
+  }
+  const { autoUpdate, computePosition, flip, offset, shift, size } =
+    window.FloatingUIDOM;
+  const tooltipPlacements = new Set([&quot;top&quot;, &quot;right&quot;, &quot;bottom&quot;, &quot;left&quot;]);
+  const tooltipId = `codex-visualization-tooltip-${
+    window.crypto?.randomUUID?.() ?? Date.now().toString(36)
+  }`;
+  const tooltipGap = 5;
+  const hoverDelay = 700;
+  const skipDelay = 300;
+  let activeTrigger = null;
+  let pendingTrigger = null;
+  let tooltip = null;
+  let openTimeout = null;
+  let autoUpdateCleanup = null;
+  let positionRequest = 0;
+  let skipDelayUntil = 0;
+
+  const getTrigger = (target) =&gt;
+    target?.nodeType === Node.ELEMENT_NODE
+      ? target.closest(&quot;[data-tooltip]&quot;)
+      : null;
+  const containsTarget = (trigger, target) =&gt;
+    target?.nodeType != null &amp;&amp; trigger.contains(target);
+  const getContent = (trigger) =&gt;
+    trigger.getAttribute(&quot;data-tooltip&quot;)?.trim() ?? &quot;&quot;;
+  const getPlacement = (trigger) =&gt; {
+    const placement = trigger.getAttribute(&quot;data-tooltip-placement&quot;);
+    return tooltipPlacements.has(placement) ? placement : &quot;top&quot;;
+  };
+  const getTooltip = () =&gt; {
+    if (tooltip == null) {
+      tooltip = document.createElement(&quot;div&quot;);
+      tooltip.id = tooltipId;
+      tooltip.className = &quot;tooltip&quot;;
+      tooltip.setAttribute(&quot;role&quot;, &quot;tooltip&quot;);
+    }
+    return tooltip;
+  };
+  const setDescribedBy = (trigger, described) =&gt; {
+    const ids = new Set(
+      (trigger.getAttribute(&quot;aria-describedby&quot;) ?? &quot;&quot;)
+        .split(/\s+/)
+        .filter(Boolean),
+    );
+    if (described) {
+      ids.add(tooltipId);
+    } else {
+      ids.delete(tooltipId);
+    }
+    if (ids.size === 0) {
+      trigger.removeAttribute(&quot;aria-describedby&quot;);
+    } else {
+      trigger.setAttribute(&quot;aria-describedby&quot;, [...ids].join(&quot; &quot;));
+    }
+  };
+  const clearOpenTimeout = () =&gt; {
+    if (openTimeout != null) {
+      window.clearTimeout(openTimeout);
+      openTimeout = null;
+    }
+    pendingTrigger = null;
+  };
+  const closeTooltip = (activateSkipDelay = true) =&gt; {
+    clearOpenTimeout();
+    positionRequest += 1;
+    autoUpdateCleanup?.();
+    autoUpdateCleanup = null;
+    if (activeTrigger == null) {
+      return;
+    }
+    setDescribedBy(activeTrigger, false);
+    activeTrigger = null;
+    tooltip?.remove();
+    if (activateSkipDelay) {
+      skipDelayUntil = Date.now() + skipDelay;
+    }
+  };
+  const updatePosition = (trigger, floating) =&gt; {
+    const request = ++positionRequest;
+    void computePosition(trigger, floating, {
+      middleware: [
+        offset(tooltipGap),
+        flip({ padding: tooltipGap }),
+        shift({ padding: tooltipGap }),
+        size({
+          padding: tooltipGap,
+          apply({ availableHeight, availableWidth, elements }) {
+            elements.floating.style.setProperty(
+              &quot;--tooltip-available-width&quot;,
+              `${Math.max(0, availableWidth)}px`,
+            );
+            elements.floating.style.setProperty(
+              &quot;--tooltip-available-height&quot;,
+              `${Math.max(0, availableHeight)}px`,
+            );
+          },
+        }),
+      ],
+      placement: getPlacement(trigger),
+      strategy: &quot;fixed&quot;,
+    })
+      .then(({ x, y }) =&gt; {
+        if (activeTrigger !== trigger || request !== positionRequest) {
+          return;
+        }
+        const scale = window.devicePixelRatio || 1;
+        floating.style.transform = `translate(${Math.round(x * scale) / scale}px, ${Math.round(y * scale) / scale}px)`;
+        floating.style.visibility = &quot;visible&quot;;
+      })
+      .catch(() =&gt; {
+        if (activeTrigger === trigger &amp;&amp; request === positionRequest) {
+          closeTooltip(false);
+        }
+      });
+  };
+  const openTooltip = (trigger) =&gt; {
+    const content = getContent(trigger);
+    if (!trigger.isConnected || content.length === 0) {
+      return;
+    }
+    clearOpenTimeout();
+    if (activeTrigger === trigger) {
+      return;
+    }
+    closeTooltip();
+    const floating = getTooltip();
+    floating.textContent = content;
+    floating.style.visibility = &quot;hidden&quot;;
+    floating.style.transform = &quot;translate(0, 0)&quot;;
+    document.body.appendChild(floating);
+    activeTrigger = trigger;
+    setDescribedBy(trigger, true);
+    autoUpdateCleanup = autoUpdate(trigger, floating, () =&gt; {
+      updatePosition(trigger, floating);
+    });
+  };
+  const requestOpen = (trigger, immediate = false) =&gt; {
+    if (
+      getContent(trigger).length === 0 ||
+      activeTrigger === trigger ||
+      pendingTrigger === trigger
+    ) {
+      return;
+    }
+    clearOpenTimeout();
+    pendingTrigger = trigger;
+    const delay =
+      immediate || activeTrigger != null || Date.now() &lt; skipDelayUntil
+        ? 0
+        : hoverDelay;
+    if (delay === 0) {
+      openTooltip(trigger);
+      return;
+    }
+    openTimeout = window.setTimeout(() =&gt; {
+      openTimeout = null;
+      pendingTrigger = null;
+      openTooltip(trigger);
+    }, delay);
+  };
+  const handlePointerOpen = (event) =&gt; {
+    if (event.pointerType === &quot;touch&quot;) {
+      return;
+    }
+    const trigger = getTrigger(event.target);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    requestOpen(trigger);
+  };
+  const handleLeave = (event) =&gt; {
+    const trigger = getTrigger(event.target);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const handleFocusIn = (event) =&gt; {
+    const trigger = getTrigger(event.target);
+    if (trigger?.matches(&quot;:focus-visible&quot;)) {
+      requestOpen(trigger, true);
+    }
+  };
+  const handleKeyDown = (event) =&gt; {
+    if (event.key === &quot;Escape&quot;) {
+      closeTooltip();
+    }
+  };
+  const handleContextMenu = (event) =&gt; {
+    const trigger = getTrigger(event.target);
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const destroy = () =&gt; {
+    closeTooltip(false);
+    document.removeEventListener(&quot;pointerover&quot;, handlePointerOpen);
+    document.removeEventListener(&quot;pointerout&quot;, handleLeave);
+    document.removeEventListener(&quot;focusin&quot;, handleFocusIn);
+    document.removeEventListener(&quot;focusout&quot;, handleLeave);
+    document.removeEventListener(&quot;keydown&quot;, handleKeyDown);
+    document.removeEventListener(&quot;contextmenu&quot;, handleContextMenu);
+    tooltip = null;
+  };
+
+  document.addEventListener(&quot;pointerover&quot;, handlePointerOpen);
+  document.addEventListener(&quot;pointerout&quot;, handleLeave);
+  document.addEventListener(&quot;focusin&quot;, handleFocusIn);
+  document.addEventListener(&quot;focusout&quot;, handleLeave);
+  document.addEventListener(&quot;keydown&quot;, handleKeyDown);
+  document.addEventListener(&quot;contextmenu&quot;, handleContextMenu);
+  window.addEventListener(&quot;pagehide&quot;, destroy, { once: true });
+})();
+&lt;/script&gt;
+&lt;script id=&quot;codex-visualization-lucide&quot; async src=&quot;https://unpkg.com/lucide@1.17.0/dist/umd/lucide.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+(() =&gt; {
+  const initialize = () =&gt; {
+    globalThis.lucide?.createIcons({ attrs: { width: 16, height: 16 } });
+  };
+  if (globalThis.lucide != null) {
+    initialize();
+    return;
+  }
+  document
+    .getElementById(&quot;codex-visualization-lucide&quot;)
+    ?.addEventListener(&quot;load&quot;, initialize, { once: true });
+})();
+&lt;/script&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;
+"></iframe>
+</body>
+</html>

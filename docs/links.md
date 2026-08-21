@@ -1,6 +1,9 @@
 # Links
 
-- 公开展示首页：<https://58wpg9fr7d-code.github.io/jingye-garden-interactive-mystery/>
+- 创作一致性工作台（Vercel）：<https://murder-mystery-studio.vercel.app/>
+- 手机端剧情体验（Vercel）：<https://murder-mystery-studio.vercel.app/phone>
+- 终局谜题（Vercel）：<https://murder-mystery-studio.vercel.app/puzzle>
+- 公开静态备份首页：<https://58wpg9fr7d-code.github.io/jingye-garden-interactive-mystery/>
 - 侦探卷宗 MVP：`web/detective-case.html`
 - 线索卡 MVP：`web/clue-cards.html`
 - 历史 Railway 地址：`https://jingyeyuan-mystery-production.up.railway.app/phone`（本轮访问超时，待重新部署或恢复）
@@ -8,4 +11,4 @@
 
 ## 发布原则
 
-公开链接只展示无后端、无密钥、无个人数据的静态 MVP；原始剧本、角色本和内部主持资料放在仓库文档中，后续可按公开范围拆分。
+Vercel 主 Demo 展示当前 ScriptLab 与手机端交互；GitHub Pages 只展示无后端、无密钥、无个人数据的静态 MVP。原始剧本、角色本和内部主持资料放在仓库文档中，后续可按公开范围拆分。
