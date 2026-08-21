@@ -25,17 +25,10 @@ async function render(pathname = "/") {
   );
 }
 
-test("server-renders the ScriptLab product workspace", async () => {
+test("server-renders the phone drama experience", async () => {
   const response = await render("/");
-  assert.equal(response.status, 200);
-  assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
-
-  const html = await response.text();
-  assert.match(html, /谜构 ScriptLab/);
-  assert.match(html, /人物关系网络/);
-  assert.match(html, /逻辑健康度/);
-  assert.match(html, /无喙镜渊/);
-  assert.doesNotMatch(html, /Your site is taking shape|codex-preview/);
+  assert.equal(response.status, 307);
+  assert.equal(response.headers.get("location"), "http://localhost/phone");
 });
 
 test("keeps the playable routes available", async () => {
@@ -43,7 +36,7 @@ test("keeps the playable routes available", async () => {
     const response = await render(pathname);
     assert.equal(response.status, 200, pathname);
     const html = await response.text();
-    assert.match(html, /谜构 ScriptLab/);
+    assert.match(html, /静夜园|无喙镜渊/);
   }
 });
 
@@ -54,9 +47,9 @@ test("uses product metadata and the expected source structure", async () => {
     readFile(new URL("app/phone/page.tsx", templateRoot), "utf8"),
     readFile(new URL("app/puzzle/page.tsx", templateRoot), "utf8"),
   ]);
-  assert.match(layout, /谜构 ScriptLab/);
-  assert.match(page, /MVP 成功指标/);
-  assert.match(page, /线索平衡/);
+  assert.match(layout, /无喙镜渊/);
+  assert.match(page, /redirect\("\/phone"\)/);
+  assert.doesNotMatch(page, /MVP 成功指标|逻辑健康度/);
   assert.match(phonePage, /静夜园/);
   assert.match(puzzlePage, /终局谜题|VectorPuzzlePage/);
 });

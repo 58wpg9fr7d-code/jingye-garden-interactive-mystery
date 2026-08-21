@@ -1,18 +1,16 @@
 # 无喙镜渊 · 静夜园互动剧本体验
 
-这是一个独立完成的复杂互动叙事产品，当前已迭代为两层体验：面向玩家的《静夜园》手机端剧情体验，以及面向作者/产品经理的“谜构 ScriptLab”创作一致性工作台。前者组织世界观、角色关系、分幕节奏、线索解锁和多结局决策；后者把角色、关系、事件和线索结构化，帮助作者检查修改后的逻辑影响。
+这是一个独立完成的复杂互动叙事产品：以科幻推理剧本杀为载体，把世界观、角色关系、分幕节奏、线索解锁、多人推理、主持人控制和多结局决策组织成一套可体验的移动端剧情产品。
 
 ## 直接体验
 
-- [创作工作台（Vercel）](https://murder-mystery-studio.vercel.app/)
 - [手机端剧情体验（Vercel）](https://murder-mystery-studio.vercel.app/phone)
-- [终局谜题（Vercel）](https://murder-mystery-studio.vercel.app/puzzle)
 - [公开 Demo（GitHub Pages）](https://58wpg9fr7d-code.github.io/jingye-garden-interactive-mystery/)
 - [项目首页](./index.html)
 - [侦探卷宗 MVP](./web/detective-case.html)
 - [线索卡 MVP](./web/clue-cards.html)
 
-Vercel 三个入口当前均返回 200，可直接打开体验；手机端会先经过封面进入剧情。GitHub Pages 版本是从原始设计材料恢复的无后端静态备份，用于稳定展示卷宗、线索卡和项目结构。历史 Railway 地址 `https://jingyeyuan-mystery-production.up.railway.app/phone` 作为备用记录保留，不作为主 Demo。
+Vercel 手机端入口可直接打开体验，会先经过封面进入剧情；GitHub Pages 版本是从原始设计材料恢复的无后端静态备份，用于稳定展示卷宗、线索卡和项目结构。历史 Railway 地址 `https://jingyeyuan-mystery-production.up.railway.app/phone` 作为备用记录保留，不作为主 Demo。
 
 ## 产品能力
 
@@ -23,11 +21,6 @@ Vercel 三个入口当前均返回 200，可直接打开体验；手机端会先
 - 线索卡按剧情进度解锁，支持抽取、收藏和未解锁保护
 - 双书房诡计、两具尸体、多名行动者、四种终局选择
 - 面向 DM 的流程、反转保护和主持提示
-- ScriptLab 人物关系网络：查看秘密、冲突、共鸣与证据闭环
-- 时间线与诡计编排：新增行动后自动检测同地点时间交集
-- 线索平衡：按指向权重计算嫌疑分布，并提示过强/过弱指向
-- 规则驱动角色模拟：用压力、关系和动机问题检查对白一致性
-- PM 作品集页：呈现问题判断、工作流、MVP 指标和路线图
 
 ## 本地运行
 
@@ -42,7 +35,7 @@ python3 -m http.server 8000
 ## 目录
 
 - `web/`：两个可交互的静态 MVP 源码
-- `完整手机端源码/`：当前 ScriptLab 工作台、手机端剧情体验和终局谜题源码（实际仓库内）
+- `完整手机端源码/`：当前手机端剧情体验源码（实际仓库内）
 - `docs/`：PRD、案例说明、验证记录和原始设计材料
 - `assets/visuals/`：角色、场景、封面和双书房示意图
 

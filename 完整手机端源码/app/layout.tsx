@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "谜构 ScriptLab｜剧本杀创作工作台",
-  description: "为剧本杀作者设计的人物关系、时间线、线索平衡与角色模拟工具。",
+  title: "无喙镜渊｜静夜园互动推理",
+  description: "以科幻推理剧本杀为载体的移动端互动剧情体验。",
   icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
 };
 
