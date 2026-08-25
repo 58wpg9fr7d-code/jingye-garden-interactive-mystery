@@ -9,6 +9,14 @@ import "./social-text-overrides.css";
 import "./news-overrides.css";
 import SocialRecordsScreen from "./social-records";
 import { dmRoleScripts } from "./dm-role-scripts";
+import {
+  createRoom,
+  getRoom,
+  joinRoom,
+  updatePlayerTokens,
+  updateRoom,
+  type RoomState,
+} from "./room-api";
 import "./lock-overrides.css";
 import "./search-overrides.css";
 import "./script-overrides.css";
@@ -1169,6 +1177,10 @@ function FakeQr() {
 
 export default function PhoneApp() {
   const [role, setRole] = useState<Role | null>(null);
+  const [roomCode, setRoomCode] = useState("");
+  const [roomState, setRoomState] = useState<RoomState | null>(null);
+  const [roomMessage, setRoomMessage] = useState("");
+  const [roomBusy, setRoomBusy] = useState(false);
   const [dmPreviewRole, setDmPreviewRole] = useState<PlayerRole | null>(null);
   const [introComplete, setIntroComplete] = useState(false);
   const [active, setActive] = useState<AppKey>("home");
@@ -1219,6 +1231,106 @@ export default function PhoneApp() {
   >({});
   const [note, setNote] = useState("");
   const [tarotQuestion, setTarotQuestion] = useState("");
+
+  function applyRoomState(state: RoomState) {
+    setRoomState(state);
+    setUnlockedAct(state.unlockedAct);
+    setActOneScriptStage(state.actOneScriptStage);
+    setActTwoScriptStage(state.actTwoScriptStage);
+    setActThreeScriptStage(state.actThreeScriptStage);
+    setCurrentGame(state.currentGame);
+    setTokensByRole(state.tokensByRole);
+  }
+
+  async function createMultiplayerRoom() {
+    setRoomBusy(true);
+    setRoomMessage("");
+    try {
+      const result = await createRoom();
+      setRoomCode(result.room);
+      applyRoomState(result.state);
+      setRole("DM");
+      setDmPreviewRole(null);
+      navigateTo("home");
+      setRoomMessage(`房间已创建：${result.room}`);
+    } catch (error) {
+      setRoomMessage(error instanceof Error ? error.message : "房间创建失败");
+    } finally {
+      setRoomBusy(false);
+    }
+  }
+
+  async function selectPlayerRole(selected: PlayerRole) {
+    if (!roomCode.trim()) {
+      setRole(selected);
+      setDmPreviewRole(null);
+      navigateTo("home");
+      return;
+    }
+    setRoomBusy(true);
+    setRoomMessage("");
+    try {
+      const result = await joinRoom(roomCode);
+      setRoomCode(result.room);
+      applyRoomState(result.state);
+      setRole(selected);
+      setDmPreviewRole(null);
+      navigateTo("home");
+    } catch (error) {
+      setRoomMessage(error instanceof Error ? error.message : "加入房间失败");
+    } finally {
+      setRoomBusy(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!roomCode) return;
+    let active = true;
+    const poll = async () => {
+      try {
+        const result = await getRoom(roomCode);
+        if (active) applyRoomState(result.state);
+      } catch {
+        if (active) setRoomMessage("房间连接中断，正在重试");
+      }
+    };
+    poll();
+    const timer = window.setInterval(poll, 1500);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [roomCode]);
+
+  useEffect(() => {
+    if (!roomCode || role !== "DM" || !roomState) return;
+    const nextState: RoomState = {
+      ...roomState,
+      unlockedAct,
+      actOneScriptStage,
+      actTwoScriptStage,
+      actThreeScriptStage,
+      currentGame,
+      tokensByRole,
+      updatedAt: Date.now(),
+    };
+    const timer = window.setTimeout(() => {
+      updateRoom(roomCode, nextState).catch(() =>
+        setRoomMessage("主控台状态暂未同步，正在重试"),
+      );
+    }, 180);
+    return () => window.clearTimeout(timer);
+  }, [
+    roomCode,
+    role,
+    roomState,
+    unlockedAct,
+    actOneScriptStage,
+    actTwoScriptStage,
+    actThreeScriptStage,
+    currentGame,
+    tokensByRole,
+  ]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setIntroComplete(true), 2600);
@@ -1283,7 +1395,7 @@ export default function PhoneApp() {
   function unlockDeepEvidence(id: string) {
     if (!role || role === "DM" || tokensByRole[role] < 20) return;
     if (unlockedDeepEvidenceIds.includes(id)) return;
-    setTokensByRole((items) => ({ ...items, [role]: items[role] - 20 }));
+    setPlayerTokenValue(role, tokensByRole[role] - 20);
     setUnlockedDeepEvidenceIds((items) => [...items, id]);
   }
   function pressKey(key: string) {
@@ -1319,14 +1431,20 @@ export default function PhoneApp() {
         ...(displayedRole === "胡谋" && unlocked ? [backdoorApp] : []),
       ]
     : [...apps, ...commonApps];
+  function setPlayerTokenValue(target: PlayerRole, value: number) {
+    const nextValue = Math.max(0, value);
+    setTokensByRole((items) => ({ ...items, [target]: nextValue }));
+    if (roomCode && role === target) {
+      updatePlayerTokens(roomCode, target, nextValue).catch(() =>
+        setRoomMessage("积分暂未同步，正在重试"),
+      );
+    }
+  }
   function setRoleTokens(target: PlayerRole, value: number) {
-    setTokensByRole((items) => ({ ...items, [target]: Math.max(0, value) }));
+    setPlayerTokenValue(target, value);
   }
   function adjustRoleTokens(target: PlayerRole, delta: number) {
-    setTokensByRole((items) => ({
-      ...items,
-      [target]: Math.max(0, items[target] + delta),
-    }));
+    setPlayerTokenValue(target, tokensByRole[target] + delta);
   }
   function unlockMemory(target: PlayerRole) {
     if (
@@ -1337,7 +1455,7 @@ export default function PhoneApp() {
       unlockedMemories.includes(target)
     )
       return;
-    setTokensByRole((items) => ({ ...items, [role]: items[role] - 20 }));
+    setPlayerTokenValue(role, tokensByRole[role] - 20);
     setUnlockedMemories((items) => [...items, target]);
   }
 
@@ -1356,11 +1474,12 @@ export default function PhoneApp() {
             <LandingSplash onSkip={() => setIntroComplete(true)} />
           ) : !role ? (
             <RoleSelect
-              onSelect={(selected) => {
-                setRole(selected);
-                setDmPreviewRole(null);
-                navigateTo("home");
-              }}
+              roomCode={roomCode}
+              roomMessage={roomMessage}
+              roomBusy={roomBusy}
+              onRoomCodeChange={(value) => setRoomCode(value.toUpperCase())}
+              onCreateRoom={createMultiplayerRoom}
+              onSelect={selectPlayerRole}
             />
           ) : active === "home" ? (
             <HomeScreen
@@ -1552,6 +1671,8 @@ export default function PhoneApp() {
                     navigateTo("home");
                   }}
                   onExitPreview={() => setDmPreviewRole(null)}
+                  roomCode={roomCode}
+                  roomMessage={roomMessage}
                 />
               )}
               </div>
@@ -1600,7 +1721,21 @@ function LandingSplash({ onSkip }: { onSkip: () => void }) {
   );
 }
 
-function RoleSelect({ onSelect }: { onSelect: (role: Role) => void }) {
+function RoleSelect({
+  roomCode,
+  roomMessage,
+  roomBusy,
+  onRoomCodeChange,
+  onCreateRoom,
+  onSelect,
+}: {
+  roomCode: string;
+  roomMessage: string;
+  roomBusy: boolean;
+  onRoomCodeChange: (value: string) => void;
+  onCreateRoom: () => void;
+  onSelect: (role: PlayerRole) => void;
+}) {
   const roles: PlayerRole[] = ["向沉", "胡谋", "章貘", "朱渴焰", "牛守拙"];
   return (
     <div className="role-select">
@@ -1610,19 +1745,37 @@ function RoleSelect({ onSelect }: { onSelect: (role: Role) => void }) {
       <p>
         玩家选择自己的角色，进入对应手机。统一 APP 会出现在每个角色的手机桌面。
       </p>
+      <div className="room-entry">
+        <label htmlFor="room-code">多人房间码</label>
+        <input
+          id="room-code"
+          value={roomCode}
+          onChange={(event) => onRoomCodeChange(event.target.value)}
+          placeholder="DM 创建后输入 6 位房间码"
+          maxLength={6}
+          autoCapitalize="characters"
+        />
+        <button type="button" onClick={onCreateRoom} disabled={roomBusy}>
+          {roomBusy ? "连接中…" : "创建 DM 房间"}
+        </button>
+        {roomMessage && <small>{roomMessage}</small>}
+      </div>
       <div className="role-list">
         {roles.map((role) => (
           <button
             key={role}
             className=""
             onClick={() => onSelect(role)}
+            disabled={roomBusy}
           >
             <b>{role}</b>
             <small>进入手机　›</small>
           </button>
         ))}
       </div>
-      <small className="prototype-hint">角色选择只保存在当前设备</small>
+      <small className="prototype-hint">
+        不填写房间码可进入本地体验；填写房间码后，幕次和积分会同步到同一房间。
+      </small>
     </div>
   );
 }
@@ -3167,6 +3320,8 @@ function DMConsole({
   previewRole,
   onPreviewRole,
   onExitPreview,
+  roomCode,
+  roomMessage,
 }: {
   unlockedAct: number;
   setUnlockedAct: (value: number) => void;
@@ -3189,6 +3344,8 @@ function DMConsole({
   previewRole: PlayerRole | null;
   onPreviewRole: (role: PlayerRole) => void;
   onExitPreview: () => void;
+  roomCode: string;
+  roomMessage: string;
 }) {
   const roles: PlayerRole[] = ["向沉", "胡谋", "章貘", "朱渴焰", "牛守拙"];
   const deepClues: { role: PlayerRole; title: string }[] = [
@@ -3216,12 +3373,20 @@ function DMConsole({
   return (
     <div className="content-screen dm-console">
       <div className="screen-intro">
-        <span>DM CONTROL / LOCAL HOST</span>
+        <span>DM CONTROL / SHARED ROOM</span>
         <h2>主持人控制台</h2>
         <p>
-          选择角色后，以该角色的桌面进入剧本、游戏和搜证；所有幕次与资料均完整开放。
+          DM 解锁幕次后，房间内玩家会同步看到对应内容；玩家积分变化也会实时回传到这里。
         </p>
       </div>
+      <section className="dm-section dm-room-card">
+        <div className="dm-section-head">
+          <b>当前多人房间</b>
+          <small>{roomMessage || "玩家输入房间码即可加入"}</small>
+        </div>
+        <div className="dm-room-code">{roomCode || "未创建房间"}</div>
+        <p>把这个 6 位房间码发给玩家；不需要登录，玩家状态只属于当前房间。</p>
+      </section>
       <section className="dm-section dm-role-preview">
         <div className="dm-section-head">
           <b>角色全开预览</b>
