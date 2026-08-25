@@ -1,0 +1,21 @@
+{
+  "name": "jingye-garden-interactive-mystery",
+  "main": "dist/server/index.js",
+  "compatibility_date": "2026-05-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "preview_urls": true,
+  "assets": {
+    "directory": "./dist/client"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "jingye-garden-rooms",
+      "database_id": "d3ce9eb7-6fc6-4fe3-8186-924243a8c480"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}
