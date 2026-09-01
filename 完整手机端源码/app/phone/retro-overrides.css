@@ -327,7 +327,8 @@ button:active,
 
 /* Compact old-phone proportions and a fuller desktop composition. */
 .phone-frame {
-  min-height: 650px !important;
+  min-height: 0 !important;
+  height: auto !important;
 }
 .phone-frame .phone-screen {
   min-height: 570px !important;
