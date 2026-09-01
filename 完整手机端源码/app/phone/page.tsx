@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import "./phone.css";
 import "./game-overrides.css";
 import "./image-overrides.css";
@@ -559,7 +559,7 @@ const evidenceSeed = [
     id: "L-03",
     kind: "其他",
     title: "静夜园 · 三层庄园地图",
-    body: "建筑为南向开口的三层 C 形结构，西、北、东三侧体块围合中央花园，三侧长度等距。\n一层：北翼挑空门厅；西翼客房；东翼监控门禁室、比格犬实验室、仓库设备间。\n二层：西翼客房；东翼杨塔罗卧室、办公室、意识实体观察室，卧室内有隐藏终端和维持舱。\n三层：西翼餐厅；北翼三槽滑轨书房；东翼 301 道具间、302 控制室、303 办公室。东侧楼梯与密道通往道具间、控制室和资料室区域。",
+    body: "建筑为南向开口的三层 C 形结构，西、北、东三侧体块围合中央花园，三侧均长廊贯通。\n一层：北翼挑空门厅；西翼客房；东翼监控门禁室、比格犬实验室、仓库设备间。\n二层：西翼客房；东翼杨塔罗卧室、办公室、意识实体观察室，卧室内有隐藏终端和维持舱。\n三层：西翼餐厅；北翼三开间书房；东翼 301 道具间、302 控制室、303 办公室。东侧楼梯与密道通往道具间、控制室和资料室区域。",
     status: "未公开",
     owner: "公共",
   },
@@ -1176,6 +1176,7 @@ function FakeQr() {
 }
 
 export default function PhoneApp() {
+  const hostTapRef = useRef({ count: 0, lastTapAt: 0 });
   const [role, setRole] = useState<Role | null>(null);
   const [roomCode, setRoomCode] = useState("");
   const [roomState, setRoomState] = useState<RoomState | null>(null);
@@ -1242,29 +1243,8 @@ export default function PhoneApp() {
     setTokensByRole(state.tokensByRole);
   }
 
-  async function createMultiplayerRoom() {
-    setRoomBusy(true);
-    setRoomMessage("");
-    try {
-      const result = await createRoom();
-      setRoomCode(result.room);
-      applyRoomState(result.state);
-      setRole("DM");
-      setDmPreviewRole(null);
-      navigateTo("home");
-      setRoomMessage(`房间已创建：${result.room}`);
-    } catch (error) {
-      setRoomMessage(error instanceof Error ? error.message : "房间创建失败");
-    } finally {
-      setRoomBusy(false);
-    }
-  }
-
   async function selectPlayerRole(selected: PlayerRole) {
     if (!roomCode.trim()) {
-      setRole(selected);
-      setDmPreviewRole(null);
-      navigateTo("home");
       return;
     }
     setRoomBusy(true);
@@ -1275,11 +1255,40 @@ export default function PhoneApp() {
       applyRoomState(result.state);
       setRole(selected);
       setDmPreviewRole(null);
-      navigateTo("home");
+      setIntroComplete(false);
     } catch (error) {
       setRoomMessage(error instanceof Error ? error.message : "加入房间失败");
     } finally {
       setRoomBusy(false);
+    }
+  }
+
+  async function enterHostMode() {
+    setRoomBusy(true);
+    setRoomMessage("");
+    try {
+      const result = await createRoom();
+      setRoomCode(result.room);
+      applyRoomState(result.state);
+      setRole("DM");
+      setDmPreviewRole(null);
+      setIntroComplete(true);
+      setActive("dm");
+    } catch (error) {
+      setRoomMessage(error instanceof Error ? error.message : "创建房间失败");
+    } finally {
+      setRoomBusy(false);
+    }
+  }
+
+  function handleHostHotspotClick() {
+    const now = Date.now();
+    const tap = hostTapRef.current;
+    tap.count = now - tap.lastTapAt < 1500 ? tap.count + 1 : 1;
+    tap.lastTapAt = now;
+    if (tap.count >= 3) {
+      tap.count = 0;
+      void enterHostMode();
     }
   }
 
@@ -1332,29 +1341,21 @@ export default function PhoneApp() {
     tokensByRole,
   ]);
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => setIntroComplete(true), 2600);
-    return () => window.clearTimeout(timer);
-  }, []);
-
-  const secondSearchComplete = unlockedAct >= 1;
+  // 当前体验版默认开放所有剧本和线索，不再依赖 DM 阶段或抽取状态。
+  const allContentOpen = true;
+  const secondSearchComplete = allContentOpen || unlockedAct >= 1;
   const visibleEvidence = useMemo(
     () =>
       evidence.filter((item) => {
         const phase = cluePhase[item.id];
-        const phaseOpen =
-          (phase !== "第二轮" || unlockedAct >= 1) &&
-          (phase !== "深层线索" || unlockedAct >= 2);
         return (
-          phaseOpen &&
-          (role === "DM" || item.status !== "未公开") &&
-          (filter === "全部" ||
+          filter === "全部" ||
             phase === filter ||
             item.kind === filter ||
-            item.status === filter)
+            item.status === filter
         );
       }),
-    [evidence, filter, unlockedAct],
+    [evidence, filter],
   );
   function toggleEvidence(id: string, next: "我搜到的" | "已公开") {
     setEvidence((items) =>
@@ -1468,17 +1469,25 @@ export default function PhoneApp() {
           <span className="status-network">静夜园</span>
           <span className="status-signal" aria-label="信号良好">▮▮▮</span>
           <span className="status-battery" aria-label="电量 87%">▰ 87%</span>
+          <button
+            type="button"
+            className="host-hotspot"
+            aria-label="系统状态"
+            onClick={handleHostHotspotClick}
+          />
         </div>
         <div className="phone-screen">
           {!introComplete ? (
-            <LandingSplash onSkip={() => setIntroComplete(true)} />
+            <LandingSplash
+              showCover={Boolean(role)}
+              onSkip={() => void enterHostMode()}
+            />
           ) : !role ? (
             <RoleSelect
               roomCode={roomCode}
               roomMessage={roomMessage}
               roomBusy={roomBusy}
               onRoomCodeChange={(value) => setRoomCode(value.toUpperCase())}
-              onCreateRoom={createMultiplayerRoom}
               onSelect={selectPlayerRole}
             />
           ) : active === "home" ? (
@@ -1524,10 +1533,10 @@ export default function PhoneApp() {
                   previewRole={dmPreviewRole || undefined}
                   openChapter={openChapter}
                   setOpenChapter={setOpenChapter}
-                  unlockedAct={unlockedAct}
-                  actOneStage={actOneScriptStage}
-                  actTwoStage={actTwoScriptStage}
-                  actThreeStage={actThreeScriptStage}
+                  unlockedAct={2}
+                  actOneStage={2}
+                  actTwoStage={2}
+                  actThreeStage={2}
                   onOpenGames={() => navigateTo("home")}
                   onOpenSearch={() => navigateTo("search")}
                 />
@@ -1555,22 +1564,26 @@ export default function PhoneApp() {
                   filter={filter}
                   setFilter={setFilter}
                   evidence={evidence}
-                  unlockedAct={
-                    role === "DM"
-                      ? 2
-                      : unlockedAct >= 2
-                        ? 2
-                        : actTwoScriptStage >= 1
-                          ? 1
-                          : 0
-                  }
+                  unlockedAct={2}
                   toggleEvidence={toggleEvidence}
                   secondSearchComplete={secondSearchComplete}
                   memoryTarget={memoryTarget}
                   setMemoryTarget={setMemoryTarget}
                   tokens={role === "DM" ? 0 : tokensByRole[role]}
-                  unlockedMemories={unlockedMemories}
-                  allowedTargets={role === "DM" ? [] : deepAccessByRole[role]}
+                  unlockedMemories={[
+                    "向沉",
+                    "胡谋",
+                    "章貘",
+                    "朱渴焰",
+                    "牛守拙",
+                  ]}
+                  allowedTargets={[
+                    "向沉",
+                    "胡谋",
+                    "章貘",
+                    "朱渴焰",
+                    "牛守拙",
+                  ]}
                   unlockMemory={unlockMemory}
                   draws={role === "DM" ? null : drawsByRole[role]}
                   drawEvidence={drawEvidence}
@@ -1706,18 +1719,41 @@ export default function PhoneApp() {
   );
 }
 
-function LandingSplash({ onSkip }: { onSkip: () => void }) {
+function LandingSplash({
+  onSkip,
+  showCover = false,
+}: {
+  onSkip: () => void;
+  showCover?: boolean;
+}) {
+  const [shattering, setShattering] = useState(false);
+  useEffect(() => {
+    if (showCover) {
+      const coverTimer = window.setTimeout(onSkip, 1600);
+      return () => window.clearTimeout(coverTimer);
+    }
+    const crackTimer = window.setTimeout(() => setShattering(true), 1300);
+    const exitTimer = window.setTimeout(onSkip, 2300);
+    return () => {
+      window.clearTimeout(crackTimer);
+      window.clearTimeout(exitTimer);
+    };
+  }, [onSkip]);
   return (
-    <button className="landing-splash" onClick={onSkip} aria-label="进入静夜园">
-      <img src="/script-images/landing-cover.jpeg" alt="静夜园封面" />
-      <i className="landing-glitch glitch-one" />
-      <i className="landing-glitch glitch-two" />
+    <div className={`landing-splash ${showCover ? "with-cover" : ""} ${shattering ? "shattering" : ""}`} onClick={onSkip} role="button" tabIndex={0} aria-label="进入静夜园">
+      {showCover && <img src="/script-images/landing-cover.jpeg" alt="静夜园封面" />}
       <div className="landing-copy">
-        <small>静夜园 / 塔罗斯内部终端</small>
-        <b>正在建立连接</b>
-        <span>轻触跳过</span>
+        <b>{showCover ? "正在进入庄园" : "静夜园正在醒来"}</b>
       </div>
-    </button>
+      {!showCover && (
+        <div className="crack-sequence" aria-hidden="true">
+          <img className="crack-frame crack-frame-1" src="/script-images/intro-crack-01.png" alt="" />
+          <img className="crack-frame crack-frame-2" src="/script-images/intro-crack-02.png" alt="" />
+          <img className="crack-frame crack-frame-3" src="/script-images/intro-crack-03.png" alt="" />
+          <img className="crack-frame crack-frame-4" src="/script-images/intro-crack-04-glitch.jpg" alt="" />
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -1726,56 +1762,52 @@ function RoleSelect({
   roomMessage,
   roomBusy,
   onRoomCodeChange,
-  onCreateRoom,
   onSelect,
 }: {
   roomCode: string;
   roomMessage: string;
   roomBusy: boolean;
   onRoomCodeChange: (value: string) => void;
-  onCreateRoom: () => void;
   onSelect: (role: PlayerRole) => void;
 }) {
   const roles: PlayerRole[] = ["向沉", "胡谋", "章貘", "朱渴焰", "牛守拙"];
+  const [selectedRole, setSelectedRole] = useState<PlayerRole | "">("");
   return (
     <div className="role-select">
-      <div className="role-mark">镜</div>
-      <span>访客入口</span>
-      <h2>选择你的角色</h2>
-      <p>
-        玩家选择自己的角色，进入对应手机。统一 APP 会出现在每个角色的手机桌面。
-      </p>
-      <div className="room-entry">
-        <label htmlFor="room-code">多人房间码</label>
+      <div className="entry-question-box">
+        <label htmlFor="room-code">静夜园的通行密码是？</label>
         <input
           id="room-code"
           value={roomCode}
           onChange={(event) => onRoomCodeChange(event.target.value)}
-          placeholder="DM 创建后输入 6 位房间码"
+          placeholder="请输入通行密码"
           maxLength={6}
           autoCapitalize="characters"
+          required
         />
-        <button type="button" onClick={onCreateRoom} disabled={roomBusy}>
-          {roomBusy ? "连接中…" : "创建 DM 房间"}
-        </button>
         {roomMessage && <small>{roomMessage}</small>}
       </div>
-      <div className="role-list">
-        {roles.map((role) => (
-          <button
-            key={role}
-            className=""
-            onClick={() => onSelect(role)}
-            disabled={roomBusy}
-          >
-            <b>{role}</b>
-            <small>进入手机　›</small>
-          </button>
-        ))}
+      <div className="entry-question-box">
+        <label htmlFor="player-role">你是？</label>
+        <select
+          id="player-role"
+          className="role-picker"
+          value={selectedRole}
+          onChange={(event) => setSelectedRole(event.target.value as PlayerRole)}
+          disabled={roomBusy}
+        >
+          <option value="" disabled aria-label="空白" />
+          {roles.map((item) => <option key={item} value={item}>{item}</option>)}
+        </select>
       </div>
-      <small className="prototype-hint">
-        不填写房间码可进入本地体验；填写房间码后，幕次和积分会同步到同一房间。
-      </small>
+      <button
+        type="button"
+        className="enter-estate"
+        disabled={!roomCode.trim() || !selectedRole || roomBusy}
+        onClick={() => selectedRole && onSelect(selectedRole)}
+      >
+        {roomBusy ? "正在进入…" : "进入庄园　›"}
+      </button>
     </div>
   );
 }
@@ -2748,7 +2780,7 @@ function ScriptScreen({
                         ? `已上传 · ${actOneStage === 0 ? "A 小剧场" : actOneStage === 1 ? "A / C" : "A / C / D"}`
                         : index === 1
                           ? "已上传 · DAY-2"
-                          : chapter.state}
+                          : "已上传 · DAY-3"}
                   </small>
                 </div>
                 <span>{locked ? "⌑" : "›"}</span>
@@ -3842,11 +3874,7 @@ function SearchHubScreen({
     >
       <div className="evidence-meta">
         <span>{item.id}</span>
-        <span
-          className={`evidence-status ${item.status === "已公开" ? "public" : ""}`}
-        >
-          {item.status}
-        </span>
+        <span className="evidence-status public">已开放</span>
       </div>
       <h3>{item.title}</h3>
       <p>{item.body}</p>
@@ -4149,24 +4177,13 @@ function SearchTreeScreen({
   const [lastDrawnId, setLastDrawnId] = useState<string | null>(null);
   const phaseOpen = (id: string) => {
     const cluePhaseName = cluePhase[id];
-    const clue = evidence.find((item) => item.id === id);
-    const hostOnlyLocked =
-      role !== "DM" &&
-      !!clue &&
-      "hostOnly" in clue &&
-      clue.hostOnly &&
-      clue.status === "未公开";
-    const unlocked =
-      role === "DM" ||
-      ((cluePhaseName !== "第二轮" || unlockedAct >= 1) &&
-        (cluePhaseName !== "深层线索" || unlockedAct >= 2));
     const selected =
       phase === "第一幕"
         ? cluePhaseName === "第一轮"
         : phase === "第二幕"
           ? cluePhaseName === "第二轮"
           : cluePhaseName === "深层线索";
-    return unlocked && selected && !hostOnlyLocked;
+    return selected;
   };
   const openSection = (next: "其他嫌疑人" | "其他" | "搜人" | "搜地点") => {
     setSection(next);
@@ -4210,7 +4227,7 @@ function SearchTreeScreen({
   const drawRound = activeDrawPhase === "第一轮" ? "first" : "second";
   const drawLimit = activeDrawPhase === "第一轮" ? 5 : 4;
   const knownEvidence = (items: (typeof evidenceSeed)[number][]) =>
-    role === "DM" ? items : items.filter((item) => item.status !== "未公开");
+    items;
   const drawPanel = (items: (typeof evidenceSeed)[number][], label: string) => {
     if (!activeDrawPhase) return null;
     const available = items.filter(
@@ -4297,25 +4314,10 @@ function SearchTreeScreen({
           {item.status}
         </span>
       </div>
-      {item.kind === "其他" && cluePhase[item.id] === "深层线索" && role !== "DM" && !unlockedDeepEvidenceIds.includes(item.id) ? (
-        <>
-          <p>这条资料被折叠在系统深层。消耗 20K Token 后可解锁全文。</p>
-          <button
-            className="deep-evidence-unlock"
-            disabled={tokens < 20}
-            onClick={() => unlockDeepEvidence(item.id)}
-          >
-            消耗 20K Token 解锁
-          </button>
-        </>
-      ) : (
-        <>
-          {"image" in item && item.image && (
-            <img className="evidence-image" src={item.image} alt={item.title} />
-          )}
-          <p>{item.body}</p>
-        </>
+      {"image" in item && item.image && (
+        <img className="evidence-image" src={item.image} alt={item.title} />
       )}
+      <p>{item.body}</p>
       <div className="evidence-footer">
         <small>
           {item.kind} · 归档人：{item.owner}
@@ -4460,16 +4462,6 @@ function SearchTreeScreen({
   const deepOtherEvidence = evidence.filter(
     (item) => item.kind === "其他" && cluePhase[item.id] === "深层线索",
   );
-  const deepCaseText =
-    deepTarget === "其他"
-      ? ""
-      : roleDayTwoSection(deepTarget, "E-案发当晚");
-  const deepRoleUnlocked =
-    role === "DM" ||
-    (deepTarget !== "其他" && unlockedMemories.includes(deepTarget));
-  const deepRoleAllowed =
-    role === "DM" ||
-    (deepTarget !== "其他" && allowedTargets.includes(deepTarget));
   return (
     <div className="content-screen search-screen">
       <div className="screen-intro">
@@ -4493,42 +4485,24 @@ function SearchTreeScreen({
       </div>
       {phase === "案发当天" ? (
         <section className="deep-clue-view">
-          <div className="deep-clue-tabs">
-            {([...people, "其他"] as const).map((item) => (
-              <button
-                key={item}
-                className={deepTarget === item ? "active" : ""}
-                onClick={() => setDeepTarget(item)}
-              >
-                {item}
-              </button>
+          <div className="deep-clue-heading">
+            <b>案发当天</b>
+            <span>已完整开放</span>
+          </div>
+          <div className="evidence-stack deep-other-evidence">
+            {deepOtherEvidence.map(evidenceCard)}
+          </div>
+          <div className="deep-script-stack">
+            {people.map((item) => (
+              <article className="deep-script-card" key={item}>
+                <h3>{item} · 案发当晚</h3>
+                <ScriptProse
+                  role={item}
+                  text={roleDayTwoSection(item, "E-案发当晚")}
+                />
+              </article>
             ))}
           </div>
-          {deepTarget === "其他" ? (
-            <div className="evidence-stack deep-other-evidence">
-              {deepOtherEvidence.map(evidenceCard)}
-            </div>
-          ) : deepRoleUnlocked ? (
-            <article className="deep-script-card">
-              <ScriptProse role={deepTarget} text={deepCaseText} />
-            </article>
-          ) : (
-            <article className="deep-script-lock">
-              {deepRoleAllowed ? (
-                <>
-                  <b>{deepTarget} · 案发当天</b>
-                  <button
-                    disabled={tokens < 20}
-                    onClick={() => unlockMemory(deepTarget)}
-                  >
-                    消耗 20K Token 解锁
-                  </button>
-                </>
-              ) : (
-                <b>等待 DM 授权</b>
-              )}
-            </article>
-          )}
         </section>
       ) : (
         <>
