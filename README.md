@@ -1,16 +1,13 @@
-# 无喙镜渊 · 静夜园互动剧本体验
+# 静夜园 · 静夜园互动剧本体验
 
 这是一个独立完成的复杂互动叙事产品：以科幻推理剧本杀为载体，把世界观、角色关系、分幕节奏、线索解锁、多人推理、主持人控制和多结局决策组织成一套可体验的移动端剧情产品。
 
 ## 直接体验
 
-- [手机端剧情体验（Vercel）](https://murder-mystery-studio.vercel.app/phone)
-- [公开 Demo（GitHub Pages）](https://58wpg9fr7d-code.github.io/jingye-garden-interactive-mystery/)
-- [项目首页](./index.html)
-- [侦探卷宗 MVP](./web/detective-case.html)
-- [线索卡 MVP](./web/clue-cards.html)
+- [手机端剧情体验（Vercel，主）](https://murder-mystery-studio.vercel.app/phone)
+- [备用入口（Cloudflare Workers · 旧版非最新）](https://jingye-garden-interactive-mystery.58wpg9fr7d.workers.dev/phone)
 
-Vercel 手机端入口可直接打开体验，会先经过封面进入剧情；GitHub Pages 版本是从原始设计材料恢复的无后端静态备份，用于稳定展示卷宗、线索卡和项目结构。历史 Railway 地址 `https://jingyeyuan-mystery-production.up.railway.app/phone` 作为备用记录保留，不作为主 Demo。
+Vercel 手机端入口可直接打开体验，会先经过封面进入剧情。
 
 ## 产品能力
 
@@ -24,11 +21,11 @@ Vercel 手机端入口可直接打开体验，会先经过封面进入剧情；G
 
 ### 轻量多人房间
 
-完整手机端支持通过房间码加入多人房间：DM 创建房间并控制幕次，玩家端只能看到已经开放的内容；玩家积分变化会写入房间状态，DM 主控台通过轮询实时刷新。GitHub Pages 静态备份仍只用于展示，不提供跨设备同步。
+完整手机端支持通过房间码加入多人房间：DM 创建房间并控制幕次，玩家端只能看到已经开放的内容；玩家积分变化会写入房间状态，DM 主控台通过轮询实时刷新。
 
 ## 本地运行
 
-无需安装依赖：直接双击 `index.html`，或在仓库根目录运行：
+无需安装依赖：在仓库根目录运行：
 
 ```bash
 python3 -m http.server 8000
@@ -38,7 +35,6 @@ python3 -m http.server 8000
 
 ## 目录
 
-- `web/`：两个可交互的静态 MVP 源码
 - `完整手机端源码/`：当前手机端剧情体验源码（实际仓库内）
 - `docs/`：PRD、案例说明、验证记录和原始设计材料
 - `assets/visuals/`：角色、场景、封面和双书房示意图
@@ -47,4 +43,4 @@ python3 -m http.server 8000
 
 ## 个人贡献与边界
 
-项目从世界观、角色关系、信息分级、玩法机制、交互结构、视觉素材整理到网页 MVP 均由本人独立完成；AI 仅作为辅助开发和整理工具。仓库同时保留原主站入口与可公开访问的静态备份，明确区分原完整产品和恢复展示版本。
+项目从世界观、角色关系、信息分级、玩法机制、交互结构、视觉素材整理到网页 MVP 均由本人独立完成；AI 仅作为辅助开发和整理工具。仓库以手机端剧情体验为当前主交付版本。
