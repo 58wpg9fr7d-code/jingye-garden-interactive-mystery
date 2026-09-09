@@ -1123,14 +1123,15 @@ button:active,
   width: min(100%, 300px);
   margin-top: 12px;
   padding: 11px 14px;
-  border: 1px solid #969696;
+  border: 1px solid #d5ae65;
   border-radius: 13px;
-  background: #969696;
-  color: #000000;
+  background: #d5ae65;
+  color: #11151d;
   font: 700 11px "Courier New", monospace;
   cursor: pointer;
 }
-.enter-estate:disabled { opacity: 1; background: #969696; color: #000000; cursor: not-allowed; }
+.enter-estate:hover:not(:disabled) { background: #e3c27e; border-color: #e3c27e; }
+.enter-estate:disabled { opacity: 1; background: #969696; border-color: #969696; color: #000000; cursor: not-allowed; }
 .phone-frame .room-entry {
   width: min(100%, 300px);
   margin-top: 20px;

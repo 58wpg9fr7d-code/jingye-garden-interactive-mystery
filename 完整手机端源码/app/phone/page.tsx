@@ -1295,11 +1295,12 @@ export default function PhoneApp() {
       const result = await joinRoom(roomCode);
       setRoomCode(result.room);
       applyRoomState(result.state);
-      setRole(selected);
     } catch (error) {
       setRoomMessage(error instanceof Error ? error.message : "加入房间失败");
     } finally {
       setRoomBusy(false);
+      // 体验版：房间服务不可用时也允许直接进入桌面，不阻断单人体验
+      setRole(selected);
     }
   }
 
@@ -1731,7 +1732,7 @@ function RoleSelect({
           onChange={(event) => setSelectedRole(event.target.value as PlayerRole)}
           disabled={roomBusy}
         >
-          <option value="" disabled aria-label="空白" />
+          <option value="" disabled>请选择角色</option>
           {roles.map((item) => <option key={item} value={item}>{item}</option>)}
         </select>
       </div>
