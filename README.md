@@ -4,8 +4,7 @@
 
 ## 直接体验
 
-- [手机端剧情体验（Vercel，主）](https://murder-mystery-studio.vercel.app/phone)
-- [备用入口（Cloudflare Workers · 旧版非最新）](https://jingye-garden-interactive-mystery.58wpg9fr7d.workers.dev/phone)
+- [手机端剧情体验（唯一入口）](https://murder-mystery-studio.vercel.app/phone)
 
 Vercel 手机端入口可直接打开体验，会先经过封面进入剧情。
 

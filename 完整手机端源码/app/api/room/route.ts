@@ -36,10 +36,16 @@ const schemaSql = `CREATE TABLE IF NOT EXISTS jingye_rooms (
 )`;
 
 async function database(): Promise<D1Database | null> {
-  const workerRuntime = (await import("cloudflare:workers")) as unknown as {
-    env?: { DB?: D1Database };
-  };
-  return workerRuntime.env?.DB ?? null;
+  try {
+    const workerRuntime = (await import("cloudflare:workers")) as unknown as {
+      env?: { DB?: D1Database };
+    };
+    return workerRuntime.env?.DB ?? null;
+  } catch {
+    // The local Node preview does not provide the Cloudflare module.
+    // Fall back to the in-memory room store; deployed Workers still use D1.
+    return null;
+  }
 }
 
 async function ensureSchema(db: D1Database) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./phone.css";
 import "./game-overrides.css";
 import "./image-overrides.css";
@@ -8,13 +8,12 @@ import "./social-overrides.css";
 import "./social-text-overrides.css";
 import "./news-overrides.css";
 import SocialRecordsScreen from "./social-records";
-import { dmRoleScripts } from "./dm-role-scripts";
+import { dmRoleScripts as allRoleScripts } from "./dm-role-scripts";
 import {
   createRoom,
   getRoom,
   joinRoom,
   updatePlayerTokens,
-  updateRoom,
   type RoomState,
 } from "./room-api";
 import "./lock-overrides.css";
@@ -24,7 +23,6 @@ import "./social-records-overrides.css";
 import "./retro-overrides.css";
 
 type PlayerRole = "向沉" | "胡谋" | "章貘" | "朱渴焰" | "牛守拙";
-type Role = PlayerRole | "DM";
 type AppKey =
   | "home"
   | "script"
@@ -43,8 +41,7 @@ type AppKey =
   | "job"
   | "detective"
   | "eco"
-  | "backdoor"
-  | "dm";
+  | "backdoor";
 type SearchFilter =
   | "全部"
   | "第一轮"
@@ -119,7 +116,7 @@ const commonApps: {
 ];
 
 const roleApps: Record<
-  Role,
+  PlayerRole,
   {
     key: AppKey;
     icon: string;
@@ -168,13 +165,6 @@ const roleApps: Record<
     label: "今日任务",
     meta: "朱渴焰",
     tone: "violet",
-  },
-  DM: {
-    key: "dm",
-    icon: "控",
-    label: "DM 控制台",
-    meta: "主持人专用",
-    tone: "dm",
   },
 };
 const backdoorApp: {
@@ -351,7 +341,7 @@ const evidenceSeed = [
     id: "P-42",
     kind: "搜人",
     title: "章貘 · 家中饲养的动物",
-    body: "家里养了很多奇怪的动物。",
+    body: "家里养着水母、蜜蜂、章鱼、蛇等奇怪动物，一些甚至有剧毒。",
     status: "未公开",
     owner: "章貘",
   },
@@ -591,7 +581,7 @@ const evidenceSeed = [
     id: "P-30",
     kind: "搜人",
     title: "向沉 · 向阳花死亡记录",
-    body: "姓名：向阳花。死亡记录与 AI 误诊有关，原诊断结论为低风险。",
+    body: "姓名：向阳花。死亡年龄：五岁。诊断记录：低风险。死亡记录与 AI 误诊有关，病例背面写着：「必须有人负责」。",
     status: "未公开",
     owner: "向沉",
   },
@@ -639,7 +629,7 @@ const evidenceSeed = [
     id: "P-15",
     kind: "搜地点",
     title: "胡谋家 · 小鸡",
-    body: "院子里养着几只小鸡。饲养箱、饲料和饮水器都放在门边。",
+    body: "院子里养着几只小鸡，饲养箱、饲料和饮水器都放在门边。其中一只叫葵葵，被照顾得很好。",
     status: "未公开",
     owner: "胡谋",
   },
@@ -703,7 +693,7 @@ const evidenceSeed = [
     id: "P-24",
     kind: "搜地点",
     title: "胡谋家 · 母亲的照片与小盒子",
-    body: "母亲的照片放在床头，旁边有一个小盒子，盒内疑似保存着母亲的遗物或骨灰。",
+    body: "一张女人的黑白照片，太宰一个木头盒子上，但女人长得并不像胡谋。旁边的盒子被盘得光滑油润，盒内疑似保存着母亲的遗物或骨灰。",
     status: "未公开",
     owner: "胡谋",
   },
@@ -735,7 +725,7 @@ const evidenceSeed = [
     id: "P-06",
     kind: "搜人",
     title: "牛守拙 · 农场照片",
-    body: "牛守拙与一头奶牛站在农场牛棚前。照片背面标注：阿花。",
+    body: "儿时在养殖厂的照片，和牛、羊、猪的合照，随着年纪增长笑容越来越少。其中一张格外开心：牛守拙与一头奶牛站在农场牛棚前，照片背面标注：阿花。",
     status: "未公开",
     owner: "牛守拙",
   },
@@ -743,7 +733,7 @@ const evidenceSeed = [
     id: "P-07",
     kind: "搜人",
     title: "牛守拙 · 女儿死亡证明",
-    body: "姓名：牛晓。死亡年龄：六岁。诊断记录：普通病毒感染，低风险。",
+    body: "姓名：牛晓。死亡年龄：六岁。诊断记录：普通病毒感染，低风险。病例背面写着：「没办法」。",
     status: "未公开",
     owner: "牛守拙",
   },
@@ -972,6 +962,54 @@ const evidenceSeed = [
     owner: "公共",
     hostOnly: true,
   },
+  {
+    id: "P-77",
+    kind: "搜人",
+    title: "章貘 · 错误指导记录",
+    body: "一张病例报告，记录一次感染后的截肢处理，被标记为「新科技」指导失误。报告背面写着：「塞翁失马，感谢你让我遇见他」。",
+    status: "未公开",
+    owner: "章貘",
+  },
+  {
+    id: "P-78",
+    kind: "搜人",
+    title: "朱渴焰 · 动物实验工作日志",
+    body: "工作日志：协助公司进行动物实验，实验犬被电击、毒杀、钝器击打、窒息等方式处理。文字平静，像在记录一件与己无关的流程。",
+    status: "未公开",
+    owner: "朱渴焰",
+  },
+  {
+    id: "P-79",
+    kind: "搜人",
+    title: "牛守拙 · 供应链笔记",
+    body: "「商品-不需要共情的痛苦」供应链管理课笔记：供应链讲求效益，不要对客体投射感情，生命的价值是明码标价的。一头奶牛寿命二十年，奶量第五年开始下降，第九年——饲料成本超过产出价值那年——被送去屠宰场。母牛在产奶量数据往下掉之前，步数会增多，这种恐慌焦虑导致的刻板行为叫「运动量异常波动」，镇静剂可尽快恢复进食。鹿茸作为珍贵药材在采割时不能打麻药，它们被反复采割，痛感和惊恐同样被生产流程遮蔽。",
+    status: "未公开",
+    owner: "牛守拙",
+  },
+  {
+    id: "P-80",
+    kind: "搜人",
+    title: "胡谋 · 自欺欺人笔记",
+    body: "「规律-自欺欺人笔记」：批量生产的肉鸡一生都活在一张 A4 纸大小的空间，互相啄羽、被剪喙。作为食物它们数量太多，没有名字只有编号，能挣钱才有价值。鸡的智商相当于两三岁人类幼儿，养作宠物则聪明可爱粘人——意义和价值因身份而不同。法则：狐狸会假装受伤一瘸一拐出现在鸡面前，鸡以为它跑不快，靠近后被暴起扑杀；狐狸养殖场里狐狸被关在窄笼中转身都困难，只被需要长毛，从没见过鸡。更聪明的一方掌握着下一等的命运。骗术：寄生蜂把卵产在毛毛虫体内，分泌化学物质让毛毛虫自愿留下来保护蜂的茧——让人信任才是更高明的骗局。",
+    status: "未公开",
+    owner: "胡谋",
+  },
+  {
+    id: "P-81",
+    kind: "搜人",
+    title: "章貘 · 投射-无法理解的异类",
+    body: "读书笔记：章鱼智商相当于人类五岁儿童，每条触手都有相对独立的神经处理能力，会用工具、会玩耍、会认人；人们觉得它太奇怪，不像哺乳动物的聪明容易被共情，章鱼的聪明是克苏鲁般不可名状。丹顶鹤一生只有一个伴侣，若伴侣死了，存活的鹤会离群，独自飞很长的路，在伴侣死去的地方反复盘旋；湿地公园剪掉鹤的羽毛不让迁徙，它依然张开翅膀助跑起跳，然后摔在地上，游客拍照说「这只鹤在跳舞」。",
+    status: "未公开",
+    owner: "章貘",
+  },
+  {
+    id: "P-82",
+    kind: "搜人",
+    title: "朱渴焰 · 可悲的信任",
+    body: "一张照片：白色背景下一群可爱的小狗，每一只都写上了名字，但都被划掉，只留下一个「花花」。工作日志：猪的智商相当于五岁人类儿童；养殖场里被喂养者亲手养大、长势却不达标的幼崽，要由喂养者亲手摔死。如果一次没摔死，小猪会摇摇晃晃站起来，回来蹭摔它的人的腿——它以为你不小心把它弄疼了。比格犬温顺、对人依恋，常被视为实验「适配」，它不会咬人、不会逃。",
+    status: "未公开",
+    owner: "朱渴焰",
+  },
 ];
 
 const filters: SearchFilter[] = [
@@ -1072,6 +1110,12 @@ const cluePhase: Record<string, SearchFilter> = {
   "D-04": "深层线索",
   "D-05": "深层线索",
   "D-06": "深层线索",
+  "P-77": "第二轮",
+  "P-78": "第一轮",
+  "P-79": "第一轮",
+  "P-80": "第一轮",
+  "P-81": "第一轮",
+  "P-82": "第一轮",
 };
 
 const games = [
@@ -1176,13 +1220,10 @@ function FakeQr() {
 }
 
 export default function PhoneApp() {
-  const hostTapRef = useRef({ count: 0, lastTapAt: 0 });
-  const [role, setRole] = useState<Role | null>(null);
+  const [role, setRole] = useState<PlayerRole | null>(null);
   const [roomCode, setRoomCode] = useState("");
-  const [roomState, setRoomState] = useState<RoomState | null>(null);
   const [roomMessage, setRoomMessage] = useState("");
   const [roomBusy, setRoomBusy] = useState(false);
-  const [dmPreviewRole, setDmPreviewRole] = useState<PlayerRole | null>(null);
   const [introComplete, setIntroComplete] = useState(false);
   const [active, setActive] = useState<AppKey>("home");
   const [screenTransitionState, setScreenTransitionState] = useState<
@@ -1220,21 +1261,21 @@ export default function PhoneApp() {
   const [hackerTokenLookups, setHackerTokenLookups] = useState<PlayerRole[]>(
     [],
   );
-  const [deepAccessByRole, setDeepAccessByRole] = useState<
-    Record<PlayerRole, PlayerRole[]>
-  >({ 向沉: [], 胡谋: [], 章貘: [], 朱渴焰: [], 牛守拙: [] });
+  const [deepAccessByRole] = useState<Record<PlayerRole, PlayerRole[]>>({
+    向沉: [],
+    胡谋: [],
+    章貘: [],
+    朱渴焰: [],
+    牛守拙: [],
+  });
   const [unlockedMemories, setUnlockedMemories] = useState<string[]>([]);
   const [currentGame, setCurrentGame] = useState(0);
   const [gameStartedAt, setGameStartedAt] = useState<number | null>(null);
   const [gameFinished, setGameFinished] = useState(false);
-  const [gameParticipants, setGameParticipants] = useState<
-    Record<number, PlayerRole[]>
-  >({});
   const [note, setNote] = useState("");
   const [tarotQuestion, setTarotQuestion] = useState("");
 
   function applyRoomState(state: RoomState) {
-    setRoomState(state);
     setUnlockedAct(state.unlockedAct);
     setActOneScriptStage(state.actOneScriptStage);
     setActTwoScriptStage(state.actTwoScriptStage);
@@ -1245,6 +1286,7 @@ export default function PhoneApp() {
 
   async function selectPlayerRole(selected: PlayerRole) {
     if (!roomCode.trim()) {
+      setRole(selected);
       return;
     }
     setRoomBusy(true);
@@ -1254,8 +1296,6 @@ export default function PhoneApp() {
       setRoomCode(result.room);
       applyRoomState(result.state);
       setRole(selected);
-      setDmPreviewRole(null);
-      setIntroComplete(false);
     } catch (error) {
       setRoomMessage(error instanceof Error ? error.message : "加入房间失败");
     } finally {
@@ -1263,32 +1303,18 @@ export default function PhoneApp() {
     }
   }
 
-  async function enterHostMode() {
+  async function enterEstate() {
     setRoomBusy(true);
     setRoomMessage("");
     try {
       const result = await createRoom();
       setRoomCode(result.room);
       applyRoomState(result.state);
-      setRole("DM");
-      setDmPreviewRole(null);
-      setIntroComplete(true);
-      setActive("dm");
-    } catch (error) {
-      setRoomMessage(error instanceof Error ? error.message : "创建房间失败");
+    } catch {
+      setRoomCode("");
     } finally {
       setRoomBusy(false);
-    }
-  }
-
-  function handleHostHotspotClick() {
-    const now = Date.now();
-    const tap = hostTapRef.current;
-    tap.count = now - tap.lastTapAt < 1500 ? tap.count + 1 : 1;
-    tap.lastTapAt = now;
-    if (tap.count >= 3) {
-      tap.count = 0;
-      void enterHostMode();
+      setIntroComplete(true);
     }
   }
 
@@ -1311,37 +1337,7 @@ export default function PhoneApp() {
     };
   }, [roomCode]);
 
-  useEffect(() => {
-    if (!roomCode || role !== "DM" || !roomState) return;
-    const nextState: RoomState = {
-      ...roomState,
-      unlockedAct,
-      actOneScriptStage,
-      actTwoScriptStage,
-      actThreeScriptStage,
-      currentGame,
-      tokensByRole,
-      updatedAt: Date.now(),
-    };
-    const timer = window.setTimeout(() => {
-      updateRoom(roomCode, nextState).catch(() =>
-        setRoomMessage("主控台状态暂未同步，正在重试"),
-      );
-    }, 180);
-    return () => window.clearTimeout(timer);
-  }, [
-    roomCode,
-    role,
-    roomState,
-    unlockedAct,
-    actOneScriptStage,
-    actTwoScriptStage,
-    actThreeScriptStage,
-    currentGame,
-    tokensByRole,
-  ]);
-
-  // 当前体验版默认开放所有剧本和线索，不再依赖 DM 阶段或抽取状态。
+  // 当前体验版默认开放所有剧本和线索，不再依赖阶段或抽取状态。
   const allContentOpen = true;
   const secondSearchComplete = allContentOpen || unlockedAct >= 1;
   const visibleEvidence = useMemo(
@@ -1370,7 +1366,7 @@ export default function PhoneApp() {
     candidateIds: string[],
     phase: "第一轮" | "第二轮",
   ) {
-    if (!role || role === "DM") return null;
+    if (!role) return null;
     const round = phase === "第一轮" ? "first" : "second";
     const limit = round === "first" ? 5 : 4;
     if (drawsByRole[role][round] >= limit) return null;
@@ -1394,7 +1390,7 @@ export default function PhoneApp() {
     return selected.id;
   }
   function unlockDeepEvidence(id: string) {
-    if (!role || role === "DM" || tokensByRole[role] < 20) return;
+    if (!role || tokensByRole[role] < 20) return;
     if (unlockedDeepEvidenceIds.includes(id)) return;
     setPlayerTokenValue(role, tokensByRole[role] - 20);
     setUnlockedDeepEvidenceIds((items) => [...items, id]);
@@ -1416,20 +1412,16 @@ export default function PhoneApp() {
     }, 120);
   }
   const openApp = (key: AppKey) => navigateTo(key);
-  const displayedRole =
-    role === "DM" && dmPreviewRole ? dmPreviewRole : role;
-  const desktopApps = displayedRole
+  const desktopApps = role
     ? [
         ...apps.filter(
           (item) =>
             item.key !== "archive" &&
-            (role === "DM" || unlockedAct >= 3 || item.key !== "lock"),
+            (unlockedAct >= 3 || item.key !== "lock"),
         ),
-        ...(displayedRole !== "DM" ? commonApps : []),
-        ...(displayedRole !== "DM"
-          ? [roleApps[displayedRole as PlayerRole]]
-          : []),
-        ...(displayedRole === "胡谋" && unlocked ? [backdoorApp] : []),
+        ...commonApps,
+        ...[roleApps[role]],
+        ...(role === "胡谋" && unlocked ? [backdoorApp] : []),
       ]
     : [...apps, ...commonApps];
   function setPlayerTokenValue(target: PlayerRole, value: number) {
@@ -1441,16 +1433,12 @@ export default function PhoneApp() {
       );
     }
   }
-  function setRoleTokens(target: PlayerRole, value: number) {
-    setPlayerTokenValue(target, value);
-  }
   function adjustRoleTokens(target: PlayerRole, delta: number) {
     setPlayerTokenValue(target, tokensByRole[target] + delta);
   }
   function unlockMemory(target: PlayerRole) {
     if (
       !role ||
-      role === "DM" ||
       !deepAccessByRole[role].includes(target) ||
       tokensByRole[role] < 20 ||
       unlockedMemories.includes(target)
@@ -1469,18 +1457,12 @@ export default function PhoneApp() {
           <span className="status-network">静夜园</span>
           <span className="status-signal" aria-label="信号良好">▮▮▮</span>
           <span className="status-battery" aria-label="电量 87%">▰ 87%</span>
-          <button
-            type="button"
-            className="host-hotspot"
-            aria-label="系统状态"
-            onClick={handleHostHotspotClick}
-          />
         </div>
         <div className="phone-screen">
           {!introComplete ? (
             <LandingSplash
               showCover={Boolean(role)}
-              onSkip={() => void enterHostMode()}
+              onSkip={() => void enterEstate()}
             />
           ) : !role ? (
             <RoleSelect
@@ -1492,14 +1474,9 @@ export default function PhoneApp() {
             />
           ) : active === "home" ? (
             <HomeScreen
-              role={displayedRole}
+              role={role}
               desktopApps={desktopApps}
               onOpen={openApp}
-              isDMPreview={role === "DM" && Boolean(dmPreviewRole)}
-              onExitPreview={() => {
-                setDmPreviewRole(null);
-                navigateTo("dm");
-              }}
             />
           ) : (
             <>
@@ -1530,7 +1507,6 @@ export default function PhoneApp() {
               {active === "script" && (
                 <ScriptScreen
                   role={role}
-                  previewRole={dmPreviewRole || undefined}
                   openChapter={openChapter}
                   setOpenChapter={setOpenChapter}
                   unlockedAct={2}
@@ -1544,17 +1520,14 @@ export default function PhoneApp() {
               {active === "games" && (
                 <GamesScreen
                   role={role}
-                  secondAct={role === "DM" || actTwoScriptStage >= 2}
+                  secondAct={actTwoScriptStage >= 2}
                   currentGame={currentGame}
                   setCurrentGame={setCurrentGame}
                   gameStartedAt={gameStartedAt}
                   setGameStartedAt={setGameStartedAt}
                   gameFinished={gameFinished}
                   setGameFinished={setGameFinished}
-                  tokens={role === "DM" ? 0 : tokensByRole[role]}
-                  allTokens={tokensByRole}
-                  gameParticipants={gameParticipants}
-                  setGameParticipants={setGameParticipants}
+                  tokens={tokensByRole[role]}
                   adjustTokens={adjustRoleTokens}
                 />
               )}
@@ -1569,7 +1542,7 @@ export default function PhoneApp() {
                   secondSearchComplete={secondSearchComplete}
                   memoryTarget={memoryTarget}
                   setMemoryTarget={setMemoryTarget}
-                  tokens={role === "DM" ? 0 : tokensByRole[role]}
+                  tokens={tokensByRole[role]}
                   unlockedMemories={[
                     "向沉",
                     "胡谋",
@@ -1585,7 +1558,7 @@ export default function PhoneApp() {
                     "牛守拙",
                   ]}
                   unlockMemory={unlockMemory}
-                  draws={role === "DM" ? null : drawsByRole[role]}
+                  draws={drawsByRole[role]}
                   drawEvidence={drawEvidence}
                   unlockedDeepEvidenceIds={unlockedDeepEvidenceIds}
                   unlockDeepEvidence={unlockDeepEvidence}
@@ -1604,16 +1577,10 @@ export default function PhoneApp() {
                 />
               )}
               {active === "social" && (
-                <SocialRecordsScreen
-                  initialPerson={
-                    role === "DM" ? dmPreviewRole || "向沉" : role
-                  }
-                />
+                <SocialRecordsScreen initialPerson={role} />
               )}
               {active === "encyclopedia" && (
-                <EncyclopediaScreen
-                  unlockedAct={role === "DM" ? 1 : unlockedAct}
-                />
+                <EncyclopediaScreen unlockedAct={unlockedAct} />
               )}
               {active === "news" && <HeadlinesScreen />}
               {active === "tarot" && (
@@ -1622,14 +1589,12 @@ export default function PhoneApp() {
                   setQuestion={setTarotQuestion}
                   note={note}
                   setNote={setNote}
-                  unlockedAct={role === "DM" ? 3 : unlockedAct}
+                  unlockedAct={unlockedAct}
                   onOpenLock={() => navigateTo("lock")}
                 />
               )}
               {active === "rumor" && <RumorScreen />}
-              {active === "hacker" &&
-                (role === "胡谋" ||
-                  (role === "DM" && dmPreviewRole === "胡谋")) && (
+              {active === "hacker" && role === "胡谋" && (
                 <HackerScreen
                   tokens={tokensByRole}
                   lookups={hackerTokenLookups}
@@ -1658,36 +1623,6 @@ export default function PhoneApp() {
                 />
               )}
               {active === "backdoor" && <BackdoorScreen />}
-              {active === "dm" && role === "DM" && (
-                <DMConsole
-                  unlockedAct={unlockedAct}
-                  setUnlockedAct={setUnlockedAct}
-                  tokens={tokensByRole}
-                  setRoleTokens={setRoleTokens}
-                  deepAccess={deepAccessByRole}
-                  setDeepAccess={setDeepAccessByRole}
-                  currentGame={currentGame}
-                  setCurrentGame={setCurrentGame}
-                  gameStartedAt={gameStartedAt}
-                  setGameStartedAt={setGameStartedAt}
-                  gameFinished={gameFinished}
-                  setGameFinished={setGameFinished}
-                  actOneStage={actOneScriptStage}
-                  setActOneStage={setActOneScriptStage}
-                  actTwoStage={actTwoScriptStage}
-                  setActTwoStage={setActTwoScriptStage}
-                  actThreeStage={actThreeScriptStage}
-                  setActThreeStage={setActThreeScriptStage}
-                  previewRole={dmPreviewRole}
-                  onPreviewRole={(target) => {
-                    setDmPreviewRole(target);
-                    navigateTo("home");
-                  }}
-                  onExitPreview={() => setDmPreviewRole(null)}
-                  roomCode={roomCode}
-                  roomMessage={roomMessage}
-                />
-              )}
               </div>
             </>
           )}
@@ -1816,29 +1751,24 @@ function HomeScreen({
   role,
   desktopApps,
   onOpen,
-  isDMPreview = false,
-  onExitPreview,
 }: {
-  role: Role;
+  role: PlayerRole;
   desktopApps: typeof apps;
   onOpen: (key: AppKey) => void;
-  isDMPreview?: boolean;
-  onExitPreview?: () => void;
 }) {
-  const wallpaper: Record<Role, string> = {
+  const wallpaper: Record<PlayerRole, string> = {
     牛守拙: "/script-images/wallpaper-niu.jpeg",
     朱渴焰: "/script-images/wallpaper-zhu.jpeg",
     胡谋: "/script-images/wallpaper-hu.jpeg",
     章貘: "/script-images/wallpaper-zhang.jpeg",
     向沉: "/script-images/wallpaper-xiang.jpeg",
-    DM: "/script-images/landing-cover.jpeg",
   };
   const commonKeys: AppKey[] = ["encyclopedia", "news", "social", "tarot"];
   const encyclopediaApp = desktopApps.find((item) => item.key === "encyclopedia");
   const publicAppTiles = desktopApps
     .filter((item) => commonKeys.includes(item.key) && item.key !== "encyclopedia")
     .slice(0, 3);
-  const roleApp = role !== "DM" ? roleApps[role] : null;
+  const roleApp = roleApps[role];
   const appTiles = roleApp ? [roleApp, ...publicAppTiles] : publicAppTiles;
   return (
     <div
@@ -1847,14 +1777,6 @@ function HomeScreen({
         backgroundImage: `url('${wallpaper[role]}')`,
       }}
     >
-      {isDMPreview && (
-        <div className="home-toolbar">
-          <span>{`DM · ${role} 全开预览`}</span>
-          <button className="dm-preview-exit" onClick={onExitPreview}>
-            退出预览
-          </button>
-        </div>
-      )}
       <div className="home-widgets">
         <div className="home-widget home-widget-clock">
           <small>静夜园系统时间</small>
@@ -2055,7 +1977,7 @@ function XiangOpening({
 }
 
 function roleDayScript(role: PlayerRole, day: number) {
-  const raw = dmRoleScripts[role] || "";
+  const raw = allRoleScripts[role] || "";
   return (
     raw.match(new RegExp(`DAY-${day}[\\s\\S]*?(?=\\nDAY-\\d|$)`))?.[0] || ""
   );
@@ -2576,65 +2498,8 @@ function DayThreeReader({
   );
 }
 
-function DMScriptActViewer({
-  act,
-  onBack,
-}: {
-  act: 1 | 2 | 3;
-  onBack: () => void;
-}) {
-  const roles: PlayerRole[] = ["向沉", "胡谋", "章貘", "朱渴焰", "牛守拙"];
-  const [selectedRole, setSelectedRole] = useState<PlayerRole>("向沉");
-  const content =
-    act === 1
-      ? roleDayScript(selectedRole, 1)
-      : act === 2
-        ? roleDayTwoSection(selectedRole, "A-幼儿园", "B-游戏2")
-        : `${roleDayTwoSection(selectedRole, "C-更多回忆", "D小剧场-聚餐")}\n\n${roleDayTwoSection(selectedRole, "D小剧场-聚餐")}`;
-  return (
-    <div className="content-screen script-reader dm-script-reader">
-      <ReadingProgress />
-      <button className="inner-back" onClick={onBack}>
-        ‹ 返回剧本目录
-      </button>
-      <div className="script-reader-head">
-        <span>DM · 全角色剧本</span>
-        <h2>第 {act} 幕</h2>
-        <small>选择角色即可查看该角色的原始剧本内容</small>
-      </div>
-      <div className="dm-game-index">
-        {roles.map((item) => (
-          <button
-            key={item}
-            className={selectedRole === item ? "active" : ""}
-            onClick={() => setSelectedRole(item)}
-          >
-            {item}
-          </button>
-        ))}
-      </div>
-      <section className="script-section script-reader-section">
-        <h3>
-          {selectedRole} ·{" "}
-          {act === 1
-            ? "DAY-1"
-            : act === 2
-              ? "DAY-2 · 幼儿园"
-              : "DAY-3 · 完整记忆 / 小剧场 / 案发当晚"}
-        </h3>
-        {content ? (
-          <ScriptProse role={selectedRole} text={content} />
-        ) : (
-          <p>该幕内容尚未录入。</p>
-        )}
-      </section>
-    </div>
-  );
-}
-
 function ScriptScreen({
   role,
-  previewRole,
   openChapter,
   setOpenChapter,
   unlockedAct,
@@ -2644,8 +2509,7 @@ function ScriptScreen({
   onOpenGames,
   onOpenSearch,
 }: {
-  role: Role;
-  previewRole?: PlayerRole;
+  role: PlayerRole;
   openChapter: number;
   setOpenChapter: (value: number) => void;
   unlockedAct: number;
@@ -2655,47 +2519,29 @@ function ScriptScreen({
   onOpenGames: () => void;
   onOpenSearch: () => void;
 }) {
-  const isDM = role === "DM";
-  const viewingRole = previewRole || role;
-  const previewingRole = isDM && Boolean(previewRole);
-  const actOne = previewingRole
-    ? firstActScripts[previewRole as PlayerRole]
-    : isDM
-      ? null
-      : firstActScripts[viewingRole as PlayerRole];
+  const actOne = firstActScripts[role];
   const [readerSection, setReaderSection] = useState<"A" | "C" | "D">("A");
-  if (
-    isDM &&
-    !previewingRole &&
-    (openChapter === 0 || openChapter === 1 || openChapter === 2)
-  )
-    return (
-      <DMScriptActViewer
-        act={openChapter === 0 ? 1 : openChapter === 1 ? 2 : 3}
-        onBack={() => setOpenChapter(-1)}
-      />
-    );
-  if (openChapter === 1 && (!isDM || previewingRole)) {
+  if (openChapter === 1) {
     return (
       <DayTwoReader
-        role={viewingRole as PlayerRole}
-        stage={isDM ? 2 : actTwoStage}
+        role={role}
+        stage={actTwoStage}
         onBack={() => setOpenChapter(-1)}
         onOpenSearch={onOpenSearch}
         onOpenGames={onOpenGames}
       />
     );
   }
-  if (openChapter === 2 && (!isDM || previewingRole)) {
+  if (openChapter === 2) {
     return (
       <DayThreeReader
-        role={viewingRole as PlayerRole}
-        stage={isDM ? 2 : actThreeStage}
+        role={role}
+        stage={actThreeStage}
         onBack={() => setOpenChapter(-1)}
       />
     );
   }
-  if (openChapter === 0 && actOne && (!isDM || previewingRole)) {
+  if (openChapter === 0 && actOne) {
     const section =
       readerSection === "C"
         ? actOne.sections[2]
@@ -2710,7 +2556,7 @@ function ScriptScreen({
         </button>
         <div className="script-reader-head">
           <span>
-            {actOne.title} · {viewingRole}
+            {actOne.title} · {role}
           </span>
           <h2>{readerSection === "A" ? "镜渊初醒" : section?.title}</h2>
           <small>已开放内容可以随时返回查看</small>
@@ -2738,10 +2584,7 @@ function ScriptScreen({
           </button>
         </div>
         {readerSection === "A" ? (
-          <XiangOpening
-            role={viewingRole as PlayerRole}
-            onOpenGames={onOpenGames}
-          />
+          <XiangOpening role={role} onOpenGames={onOpenGames} />
         ) : section ? (
           <section className="script-section script-reader-section">
             <h3>{section.title}</h3>
@@ -2760,7 +2603,7 @@ function ScriptScreen({
       </div>
       <div className="chapter-list">
         {chapters.map((chapter, index) => {
-          const locked = !isDM && index > unlockedAct;
+          const locked = index > unlockedAct;
           return (
             <article
               key={chapter.title}
@@ -2803,12 +2646,9 @@ function GamesScreen({
   gameFinished,
   setGameFinished,
   tokens,
-  allTokens,
-  gameParticipants,
-  setGameParticipants,
   adjustTokens,
 }: {
-  role: Role;
+  role: PlayerRole;
   secondAct: boolean;
   currentGame: number;
   setCurrentGame: (value: number) => void;
@@ -2817,9 +2657,6 @@ function GamesScreen({
   gameFinished: boolean;
   setGameFinished: (value: boolean) => void;
   tokens: number;
-  allTokens: Record<PlayerRole, number>;
-  gameParticipants: Record<number, PlayerRole[]>;
-  setGameParticipants: (value: Record<number, PlayerRole[]>) => void;
   adjustTokens: (role: PlayerRole, delta: number) => void;
 }) {
   const game = games[currentGame];
@@ -2832,27 +2669,12 @@ function GamesScreen({
   const [redCount, setRedCount] = useState(1);
   const [redTurn, setRedTurn] = useState<PlayerRole>("胡谋");
   const [redPaid, setRedPaid] = useState(false);
-  const isDM = role === "DM";
-  const participants = gameParticipants[game.no] || [];
-  const required: Record<number, PlayerRole> = {
-    2: "章貘",
-    4: "胡谋",
-    5: "向沉",
-    6: "朱渴焰",
-    7: "牛守拙",
-  };
-  const requiredRole = required[game.no];
-  const effectiveParticipants =
-    requiredRole && !participants.includes(requiredRole)
-      ? [...participants, requiredRole]
-      : participants;
-  const participantReady =
-    isDM || (role !== "DM" && effectiveParticipants.includes(role));
-  const otherRedPlayer = effectiveParticipants.find((item) => item !== "胡谋");
-  const visibleGames = isDM
-    ? games
-    : games.filter((item) => item.act === (secondAct ? 2 : 1));
-  const locked = game.act === 2 && !secondAct && !isDM;
+  const participants: PlayerRole[] = ["向沉", "胡谋", "章貘", "朱渴焰", "牛守拙"];
+  const otherRedPlayer = participants.find((item) => item !== "胡谋");
+  const visibleGames = games.filter(
+    (item) => item.act === (secondAct ? 2 : 1),
+  );
+  const locked = game.act === 2 && !secondAct;
   useEffect(() => {
     if (!gameStartedAt) {
       setRemaining((game.duration ?? 10) * 60);
@@ -2902,7 +2724,7 @@ function GamesScreen({
     });
   };
   const start = () => {
-    if (!isDM && (!participantReady || (role === "牛守拙" && game.act === 1)))
+    if (!participantReady || (role === "牛守拙" && game.act === 1))
       return;
     if (game.no === 4 && !redPaid && otherRedPlayer) {
       adjustTokens("胡谋", -50);
@@ -2920,7 +2742,7 @@ function GamesScreen({
   const submitGold = () => {
     if (goldSubmitted || !goldSelected) return;
     setGoldSubmitted(true);
-    if (goldSelected === "C" && role !== "DM" && !goldRewarded) {
+    if (goldSelected === "C" && !goldRewarded) {
       adjustTokens(role, 10);
       setGoldRewarded(true);
     }
@@ -2929,21 +2751,21 @@ function GamesScreen({
     if (
       !otherRedPlayer ||
       redTaken >= 20 ||
-      (!isDM && !effectiveParticipants.includes(redTurn))
+      (!effectiveParticipants.includes(redTurn))
     )
       return;
     const count = Math.min(redCount, 5, 20 - redTaken);
     let score = 0;
     for (let index = redTaken + 1; index <= redTaken + count; index += 1)
       score += index <= 3 ? 2 : index <= 10 ? 3 : index <= 19 ? 4 : 100;
-    if (role !== "DM") adjustTokens(redTurn, score);
+    adjustTokens(redTurn, score);
     const nextTaken = redTaken + count;
     setRedTaken(nextTaken);
     if (nextTaken >= 20) setGameFinished(true);
     else setRedTurn(redTurn === "胡谋" ? otherRedPlayer : "胡谋");
   };
   const requestHelp = () => {
-    if (help || isDM || tokens < 5) return;
+    if (help || tokens < 5) return;
     adjustTokens(role, -5);
     setHelp(clue);
   };
@@ -2972,7 +2794,7 @@ function GamesScreen({
         <button
           className="game-enter"
           onClick={submitGold}
-          disabled={isDM || !goldSelected || goldSubmitted}
+          disabled={!goldSelected || goldSubmitted}
         >
           提交答案
         </button>
@@ -3034,96 +2856,12 @@ function GamesScreen({
     ) : (
       <p>{game.rule}</p>
     );
-  const allGamesView = isDM && (
-    <section className="dm-all-games">
-      <div className="dm-all-games-head">
-        <b>全部游戏检查</b>
-        <small>先点选参加者，玩家才会看到该局的实际操作界面</small>
-      </div>
-      {games.map((item, index) => {
-        const selected = gameParticipants[item.no] || [];
-        return (
-          <article
-            key={item.no}
-            className={`dm-all-game ${index === currentGame ? "active" : ""}`}
-          >
-            <button
-              className="dm-game-select"
-              onClick={() => {
-                setCurrentGame(index);
-                setGameStartedAt(null);
-                setGameFinished(false);
-              }}
-            >
-              <span>
-                GAME 0{item.no} · 第{item.act}幕
-              </span>
-              <b>{item.title}</b>
-            </button>
-            <p>{item.rule}</p>
-            <div className="dm-participant-picker">
-              <small>参与者（DM 点选）</small>
-              {(
-                ["向沉", "胡谋", "章貘", "朱渴焰", "牛守拙"] as PlayerRole[]
-              ).map((target) => (
-                <button
-                  key={target}
-                  className={`${selected.includes(target) || target === ({ 2: "章貘", 4: "胡谋", 5: "向沉", 6: "朱渴焰", 7: "牛守拙" } as Record<number, PlayerRole>)[item.no] ? "active" : ""}`}
-                  onClick={() =>
-                    toggleParticipantFor(
-                      item.no,
-                      target,
-                      setGameParticipants,
-                      gameParticipants,
-                    )
-                  }
-                >
-                  {selected.includes(target) ||
-                  target ===
-                    (
-                      {
-                        2: "章貘",
-                        4: "胡谋",
-                        5: "向沉",
-                        6: "朱渴焰",
-                        7: "牛守拙",
-                      } as Record<number, PlayerRole>
-                    )[item.no]
-                    ? "✓"
-                    : "○"}{" "}
-                  {target}
-                </button>
-              ))}
-            </div>
-            <dl>
-              <div>
-                <dt>费用</dt>
-                <dd>{item.cost}</dd>
-              </div>
-              <div>
-                <dt>限时</dt>
-                <dd>{item.duration} 分钟</dd>
-              </div>
-              <div>
-                <dt>奖励</dt>
-                <dd>{item.reward}</dd>
-              </div>
-            </dl>
-          </article>
-        );
-      })}
-    </section>
-  );
   return (
     <div className="content-screen games-screen">
       <div className="screen-intro">
         <span>GAME ROOM / TOKEN TABLE</span>
         <h2>游戏</h2>
-        <p>
-          {isDM
-            ? "DM 最高权限：可查看全部游戏，并点选每局实际参与者。"
-            : "先由 DM 点选参与者；被点选后，才能进入该局真正的操作界面。"}
-        </p>
+        <p>每局都有规则、费用与限时。完成当前一局后即可进入下一局。</p>
       </div>
       <img
         className="game-scene-image"
@@ -3132,21 +2870,8 @@ function GamesScreen({
       />
       <div className="game-token-bar">
         <span>您当前的 K Token 值</span>
-        <b>{isDM ? "DM" : `${tokens}K`}</b>
+        <b>{`${tokens}K`}</b>
       </div>
-      {isDM && (
-        <section className="dm-live-status">
-          <b>实时状态</b>
-          {Object.keys(allTokens).map((item) => (
-            <span key={item}>
-              {item}：{allTokens[item]}K　
-              {(gameParticipants[game.no] || []).includes(item as PlayerRole)
-                ? "已参加"
-                : "未点选"}
-            </span>
-          ))}
-        </section>
-      )}
       <div className="game-progress">
         {visibleGames.map((item) => (
           <span
@@ -3157,9 +2882,7 @@ function GamesScreen({
           </span>
         ))}
       </div>
-      <article
-        className={`game-focus ${locked || !participantReady ? "locked" : ""}`}
-      >
+      <article className={`game-focus ${locked ? "locked" : ""}`}>
         <div className="game-top">
           <span>
             GAME 0{game.no} · 第{game.act}幕
@@ -3167,20 +2890,16 @@ function GamesScreen({
           <b>
             {locked
               ? "等待第二幕"
-              : !participantReady
-                ? "等待 DM 点选"
-                : gameFinished
-                  ? "本局完成"
-                  : gameStartedAt
-                    ? "进行中"
-                    : "等待开始"}
+              : gameFinished
+                ? "本局完成"
+                : gameStartedAt
+                  ? "进行中"
+                  : "等待开始"}
           </b>
         </div>
         <h3>{game.title}</h3>
         {locked ? (
-          <p>第二幕开放后，DM 才能切换到这个游戏。</p>
-        ) : !participantReady ? (
-          <p>你尚未被 DM 点选为本局参与者。线下确认后，请等待 DM 开放。</p>
+          <p>第二幕开放后，才能切换到这个游戏。</p>
         ) : (
           <>
             {gameRulePanel}
@@ -3198,17 +2917,15 @@ function GamesScreen({
                 <dd>{game.reward}</dd>
               </div>
             </dl>
-            {!isDM && (
-              <div className="game-help">
-                <button
-                  onClick={requestHelp}
-                  disabled={Boolean(help) || tokens < 5}
-                >
-                  求助（5K Token）
-                </button>
-                {help && <span>提示：{help}</span>}
-              </div>
-            )}
+            <div className="game-help">
+              <button
+                onClick={requestHelp}
+                disabled={Boolean(help) || tokens < 5}
+              >
+                求助（5K Token）
+              </button>
+              {help && <span>提示：{help}</span>}
+            </div>
             <div className="game-countdown">
               {gameStartedAt ? `${minutes}:${seconds}` : "10:00"}
             </div>
@@ -3222,16 +2939,14 @@ function GamesScreen({
               }
             >
               {gameFinished
-                ? isDM
-                  ? "本局已完成"
-                  : "等待 DM 进入下一个"
+                ? "本局已完成"
                 : gameStartedAt
                   ? "倒计时进行中"
                   : "开始游戏"}
             </button>
             {gameFinished && (
               <button className="game-next" onClick={next}>
-                {isDM ? "进入下一游戏" : "等待 DM 开放下一页"}
+                {"进入下一游戏"}
               </button>
             )}
           </>
@@ -3263,387 +2978,6 @@ function toggleParticipantFor(
       ? current.filter((item) => item !== target)
       : [...current, target],
   });
-}
-
-function DMRoleArchive() {
-  const roles: PlayerRole[] = ["向沉", "胡谋", "章貘", "朱渴焰", "牛守拙"];
-  const [selectedRole, setSelectedRole] = useState<PlayerRole>("向沉");
-  const [selectedSection, setSelectedSection] = useState(0);
-  const raw = dmRoleScripts[selectedRole] || "";
-  const firstAct = raw.indexOf("DAY-1");
-  const profile = firstAct > -1 ? raw.slice(0, firstAct) : raw;
-  const acts = raw.match(/DAY-\d[\s\S]*?(?=\nDAY-\d|$)/g) || [];
-  const sections = [profile, ...acts].filter(Boolean);
-  const labels = [
-    "角色档案",
-    ...acts.map((act) => act.match(/DAY-\d/)?.[0] || "幕次"),
-  ];
-  const activeIndex = Math.min(selectedSection, sections.length - 1);
-  return (
-    <section className="dm-section dm-script-library">
-      <div className="dm-section-head">
-        <b>全角色剧本库</b>
-        <small>DM 最高权限 · 所有角色、所有幕次均已开放</small>
-      </div>
-      <div className="dm-game-index">
-        {roles.map((role) => (
-          <button
-            key={role}
-            className={selectedRole === role ? "active" : ""}
-            onClick={() => {
-              setSelectedRole(role);
-              setSelectedSection(0);
-            }}
-          >
-            {role}
-          </button>
-        ))}
-      </div>
-      <div className="dm-act-tabs">
-        {labels.map((label, index) => (
-          <button
-            key={label}
-            className={activeIndex === index ? "active" : ""}
-            onClick={() => setSelectedSection(index)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-      <article className="dm-script-raw">
-        <pre>{sections[activeIndex]}</pre>
-      </article>
-      <details className="dm-all-clues">
-        <summary>全部已收录线索（{evidenceSeed.length}）</summary>
-        <div>
-          {evidenceSeed.map((clue) => (
-            <article key={clue.id}>
-              <b>
-                {clue.id} · {clue.title}
-              </b>
-              <p>{clue.body}</p>
-            </article>
-          ))}
-        </div>
-      </details>
-    </section>
-  );
-}
-
-function DMConsole({
-  unlockedAct,
-  setUnlockedAct,
-  tokens,
-  setRoleTokens,
-  deepAccess,
-  setDeepAccess,
-  currentGame,
-  setCurrentGame,
-  gameStartedAt,
-  setGameStartedAt,
-  gameFinished,
-  setGameFinished,
-  actOneStage,
-  setActOneStage,
-  actTwoStage,
-  setActTwoStage,
-  actThreeStage,
-  setActThreeStage,
-  previewRole,
-  onPreviewRole,
-  onExitPreview,
-  roomCode,
-  roomMessage,
-}: {
-  unlockedAct: number;
-  setUnlockedAct: (value: number) => void;
-  tokens: Record<PlayerRole, number>;
-  setRoleTokens: (role: PlayerRole, value: number) => void;
-  deepAccess: Record<PlayerRole, PlayerRole[]>;
-  setDeepAccess: (value: Record<PlayerRole, PlayerRole[]>) => void;
-  currentGame: number;
-  setCurrentGame: (value: number) => void;
-  gameStartedAt: number | null;
-  setGameStartedAt: (value: number | null) => void;
-  gameFinished: boolean;
-  setGameFinished: (value: boolean) => void;
-  actOneStage: number;
-  setActOneStage: (value: number) => void;
-  actTwoStage: number;
-  setActTwoStage: (value: number) => void;
-  actThreeStage: number;
-  setActThreeStage: (value: number) => void;
-  previewRole: PlayerRole | null;
-  onPreviewRole: (role: PlayerRole) => void;
-  onExitPreview: () => void;
-  roomCode: string;
-  roomMessage: string;
-}) {
-  const roles: PlayerRole[] = ["向沉", "胡谋", "章貘", "朱渴焰", "牛守拙"];
-  const deepClues: { role: PlayerRole; title: string }[] = [
-    { role: "向沉", title: "失踪人口与责任链" },
-    { role: "胡谋", title: "节目设计与情感采集" },
-    { role: "章貘", title: "深度合作与复制调用" },
-    { role: "朱渴焰", title: "重复梦境记录" },
-    { role: "牛守拙", title: "面罩与庄园记忆" },
-  ];
-  const stageNames = [
-    "第一幕 · 初醒与第一轮线索",
-    "第二幕 · 幼儿园、生活线索与游戏",
-    "第三幕 · 完整记忆、聚餐与案发当晚",
-    "终局 · 密室与出口选择",
-  ];
-  const actOneScriptNames = ["A · 小剧场", "C · 梦", "D · 回忆"];
-  function toggleDeep(viewer: PlayerRole, target: PlayerRole) {
-    setDeepAccess({
-      ...deepAccess,
-      [viewer]: deepAccess[viewer].includes(target)
-        ? deepAccess[viewer].filter((item) => item !== target)
-        : [...deepAccess[viewer], target],
-    });
-  }
-  return (
-    <div className="content-screen dm-console">
-      <div className="screen-intro">
-        <span>DM CONTROL / SHARED ROOM</span>
-        <h2>主持人控制台</h2>
-        <p>
-          DM 解锁幕次后，房间内玩家会同步看到对应内容；玩家积分变化也会实时回传到这里。
-        </p>
-      </div>
-      <section className="dm-section dm-room-card">
-        <div className="dm-section-head">
-          <b>当前多人房间</b>
-          <small>{roomMessage || "玩家输入房间码即可加入"}</small>
-        </div>
-        <div className="dm-room-code">{roomCode || "未创建房间"}</div>
-        <p>把这个 6 位房间码发给玩家；不需要登录，玩家状态只属于当前房间。</p>
-      </section>
-      <section className="dm-section dm-role-preview">
-        <div className="dm-section-head">
-          <b>角色全开预览</b>
-          <small>选择角色后进入其完整手机界面</small>
-        </div>
-        <div className="dm-role-preview-grid">
-          {roles.map((item) => (
-            <button
-              key={item}
-              className={previewRole === item ? "active" : ""}
-              onClick={() => onPreviewRole(item)}
-            >
-              <span>{item.slice(0, 1)}</span>
-              <b>{item}</b>
-              <small>剧本 · 游戏 · 搜证</small>
-            </button>
-          ))}
-        </div>
-        {previewRole && (
-          <button className="dm-clear-preview" onClick={onExitPreview}>
-            退出当前角色预览
-          </button>
-        )}
-      </section>
-      <section className="dm-section">
-        <div className="dm-section-head">
-          <b>剧情进度</b>
-          <small>当前：{stageNames[unlockedAct]}</small>
-        </div>
-        <div className="dm-stage-grid">
-          {stageNames.map((name, index) => (
-            <button
-              key={name}
-              className={unlockedAct === index ? "active" : ""}
-              onClick={() => setUnlockedAct(index)}
-            >
-              <span>0{index + 1}</span>
-              <b>{name.split(" · ")[0]}</b>
-              <small>{index <= unlockedAct ? "已开放" : "未开放"}</small>
-            </button>
-          ))}
-        </div>
-        <div className="dm-warning">
-          开放下一幕后，玩家才能看到对应剧本、搜证卡和游戏；密室只在终局开放。
-        </div>
-      </section>
-      <section className="dm-section">
-        <div className="dm-section-head">
-          <b>第二幕流程</b>
-          <small>依次：幼儿园 → 生活线索 → 游戏</small>
-        </div>
-        <div className="dm-game-index">
-          {["A · 幼儿园", "开放生活线索", "进入第二幕游戏"].map(
-            (name, index) => (
-              <button
-                key={name}
-                className={actTwoStage === index ? "active" : ""}
-                onClick={() => setActTwoStage(index)}
-              >
-                {index <= actTwoStage ? "✓" : "○"} {name}
-              </button>
-            ),
-          )}
-        </div>
-      </section>
-      <section className="dm-section">
-        <div className="dm-section-head">
-          <b>第三幕剧本内容</b>
-          <small>依次：完整记忆 → 小剧场 → 案发当晚</small>
-        </div>
-        <div className="dm-game-index">
-          {["C · 完整记忆", "D · 小剧场", "E · 案发当晚"].map((name, index) => (
-            <button
-              key={name}
-              className={actThreeStage === index ? "active" : ""}
-              onClick={() => setActThreeStage(index)}
-            >
-              {index <= actThreeStage ? "✓" : "○"} {name}
-            </button>
-          ))}
-        </div>
-      </section>
-      <section className="dm-section">
-        <div className="dm-section-head">
-          <b>第一幕剧本内容</b>
-          <small>五名角色同步逐段开放，已开放内容可回看</small>
-        </div>
-        <div className="dm-game-index">
-          {actOneScriptNames.map((name, index) => (
-            <button
-              key={name}
-              className={actOneStage === index ? "active" : ""}
-              onClick={() => setActOneStage(index)}
-            >
-              {index <= actOneStage ? "✓" : "○"} {name}
-            </button>
-          ))}
-        </div>
-      </section>
-      <section className="dm-section">
-        <div className="dm-section-head">
-          <b>游戏进度</b>
-          <small>当前 GAME 0{currentGame + 1}</small>
-        </div>
-        <div className="dm-game-controls">
-          <div>
-            <b>{games[currentGame].title}</b>
-            <small>
-              {gameFinished
-                ? "本局已完成，可开放下一页"
-                : gameStartedAt
-                  ? "倒计时已经开始"
-                  : "等待玩家开始"}
-            </small>
-          </div>
-          <div>
-            <button
-              onClick={() => {
-                setGameStartedAt(null);
-                setGameFinished(false);
-              }}
-            >
-              重置本局
-            </button>
-            <button
-              onClick={() => {
-                if (currentGame < games.length - 1) {
-                  setCurrentGame(currentGame + 1);
-                  setGameStartedAt(null);
-                  setGameFinished(false);
-                }
-              }}
-            >
-              开放下一游戏
-            </button>
-          </div>
-        </div>
-        <div className="dm-game-index">
-          {games.map((item, index) => (
-            <button
-              key={item.no}
-              className={index === currentGame ? "active" : ""}
-              onClick={() => {
-                setCurrentGame(index);
-                setGameStartedAt(null);
-                setGameFinished(false);
-              }}
-            >
-              GAME 0{item.no} · {item.title}
-            </button>
-          ))}
-        </div>
-      </section>
-      <section className="dm-section">
-        <div className="dm-section-head">
-          <b>K Token 管理</b>
-          <small>可直接输入或用 ±10 调整</small>
-        </div>
-        <div className="dm-token-list">
-          {roles.map((item) => (
-            <label key={item}>
-              <span>{item}</span>
-              <input
-                type="number"
-                min="0"
-                value={tokens[item]}
-                onChange={(event) =>
-                  setRoleTokens(item, Number(event.target.value) || 0)
-                }
-              />
-              <button onClick={() => setRoleTokens(item, tokens[item] - 10)}>
-                −10
-              </button>
-              <button onClick={() => setRoleTokens(item, tokens[item] + 10)}>
-                +10
-              </button>
-            </label>
-          ))}
-        </div>
-      </section>
-      <section className="dm-section">
-        <div className="dm-section-head">
-          <b>深层线索授权</b>
-          <small>勾选后，该玩家才可消耗 20K Token 解锁对应记忆</small>
-        </div>
-        <div className="dm-access-list">
-          {roles.map((viewer) => (
-            <article key={viewer}>
-              <b>{viewer}</b>
-              <div>
-                {deepClues.map((clue) => (
-                  <button
-                    key={clue.role}
-                    className={
-                      deepAccess[viewer].includes(clue.role) ? "active" : ""
-                    }
-                    onClick={() => toggleDeep(viewer, clue.role)}
-                  >
-                    {deepAccess[viewer].includes(clue.role) ? "✓" : "○"}{" "}
-                    {clue.role} · {clue.title}
-                  </button>
-                ))}
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-      <section className="dm-section dm-handbook">
-        <div className="dm-section-head">
-          <b>DM 手册</b>
-          <small>现场流程提示</small>
-        </div>
-        <p>1. 第一幕只开放 GAME 01–03，三个游戏按顺序进行。</p>
-        <p>
-          2.
-          每局先在线下确认参与者，再在“游戏”页面点选对应角色；未被点选者无法进入实际界面。
-        </p>
-        <p>
-          3. 当前游戏完成后，由 DM 点击“开放下一游戏”；第二幕开放 GAME 04–07。
-        </p>
-        <p>4. 终局点击“终局”后，密室 App 才出现在桌面。</p>
-        <p>5. K Token 只在当前设备本地保存；正式多人版需要接入共享后端。</p>
-      </section>
-    </div>
-  );
 }
 
 function OthersScreen() {
@@ -4004,21 +3338,15 @@ function SearchHubScreen({
               >
                 ‹ 返回其他
               </button>
-              {role === "DM" ? (
-                <div className="empty-state">
-                  DM 请在控制台管理深层线索授权。
-                </div>
-              ) : (
-                <MemoryScreen
-                  role={role}
-                  target={memoryTarget}
-                  setTarget={setMemoryTarget}
-                  tokens={tokens}
-                  unlocked={unlockedMemories}
-                  allowedTargets={allowedTargets}
-                  unlock={unlockMemory}
-                />
-              )}
+              <MemoryScreen
+                role={role}
+                target={memoryTarget}
+                setTarget={setMemoryTarget}
+                tokens={tokens}
+                unlocked={unlockedMemories}
+                allowedTargets={allowedTargets}
+                unlock={unlockMemory}
+              />
             </>
           )}
           {otherView === "deepDocs" && (
@@ -4044,22 +3372,7 @@ function SearchHubScreen({
               >
                 ‹ 返回其他
               </button>
-              <div className="rumor-list">
-                <article className="evidence-card">
-                  <small>传闻 01</small>
-                  <h3>有人从未离开静夜园</h3>
-                  <p>
-                    庄园每隔一段时间就会多出一间房。有人说，那不是房间，是系统在复原某个已经消失的人。
-                  </p>
-                </article>
-                <article className="evidence-card">
-                  <small>传闻 02</small>
-                  <h3>杨塔罗从不需要睡觉</h3>
-                  <p>
-                    夜里有人看见他站在二楼走廊尽头，一动不动。灯灭之后，原地只剩下一段没有来源的声音。
-                  </p>
-                </article>
-              </div>
+              <RumorContent />
             </>
           )}
         </>
@@ -4208,18 +3521,8 @@ function SearchTreeScreen({
         <span>其他嫌疑人</span>
         <span>可查看</span>
       </div>
-      {role === "DM" ? <p>{body}</p> : <p>尚未抽到与此分类对应的具体线索。</p>}
-      {role === "DM" && title.includes("浏览记录") && (
-        <button
-          className="social-entry-button"
-          onClick={() => setSocialPerson(owner)}
-        >
-          进入该角色的小蓝书
-        </button>
-      )}
-      {role === "DM" && socialPerson && title.includes("浏览记录") && (
-        <SocialRecordsScreen compact initialPerson={socialPerson} />
-      )}
+      <p>尚未抽到与此分类对应的具体线索。</p>
+
     </article>
   );
   const activeDrawPhase =
@@ -4235,31 +3538,7 @@ function SearchTreeScreen({
         item.status === "未公开" &&
         !("hostOnly" in item && item.hostOnly),
     );
-    if (role === "DM") {
-      return (
-        <section className="draw-panel dm-draw-panel">
-          <div>
-            <small>{activeDrawPhase} · DM 抽卡池预览</small>
-            <b>{label}</b>
-            <span>
-              本区域共 {items.length} 张；其中 {available.length} 张仍未被玩家抽取。
-            </span>
-          </div>
-          <button
-            disabled={!available.length}
-            onClick={() => {
-              const selected = available[Math.floor(Math.random() * available.length)];
-              if (selected) setLastDrawnId(selected.id);
-            }}
-          >
-            {available.length ? "随机预览一张未抽线索" : "本区域已无未抽线索"}
-          </button>
-          {lastDrawnId && items.some((item) => item.id === lastDrawnId) && (
-            <p>预览结果：{items.find((item) => item.id === lastDrawnId)?.title}</p>
-          )}
-        </section>
-      );
-    }
+
     const remaining = Math.max(0, drawLimit - (draws?.[drawRound] || 0));
     return (
       <section className="draw-panel">
@@ -4322,16 +3601,7 @@ function SearchTreeScreen({
         <small>
           {item.kind} · 归档人：{item.owner}
         </small>
-        {role === "DM" && (
-          <div>
-            <button onClick={() => toggleEvidence(item.id, "我搜到的")}>
-              {item.status === "我搜到的" ? "已归档" : "我搜到"}
-            </button>
-            <button onClick={() => toggleEvidence(item.id, "已公开")}>
-              {item.status === "已公开" ? "已公开" : "公开"}
-            </button>
-          </div>
-        )}
+
       </div>
     </article>
   );
@@ -4596,7 +3866,7 @@ function SearchTreeScreen({
                 ‹ 返回其他
               </button>
               <EncyclopediaScreen
-                unlockedAct={role === "DM" ? 1 : unlockedAct}
+                unlockedAct={unlockedAct}
               />
             </>
           )}
@@ -4608,22 +3878,7 @@ function SearchTreeScreen({
               >
                 ‹ 返回其他
               </button>
-              <div className="rumor-list">
-                <article className="evidence-card">
-                  <small>传闻 01</small>
-                  <h3>有人从未离开静夜园</h3>
-                  <p>
-                    庄园每隔一段时间就会多出一间房。有人说，那不是房间，是系统在复原某个已经消失的人。
-                  </p>
-                </article>
-                <article className="evidence-card">
-                  <small>传闻 02</small>
-                  <h3>杨塔罗从不需要睡觉</h3>
-                  <p>
-                    夜里有人看见他站在二楼走廊尽头，一动不动。灯灭之后，原地只剩下一段没有来源的声音。
-                  </p>
-                </article>
-              </div>
+              <RumorContent />
             </>
           )}
         </>
@@ -4809,25 +4064,64 @@ function HeadlinesScreen() {
   );
 }
 
-function RumorScreen() {
+function RumorContent() {
   return (
     <div className="rumor-list">
-      <article className="evidence-card">
-        <small>传闻 01</small>
-        <h3>有人从未离开静夜园</h3>
-        <p>
-          庄园每隔一段时间就会多出一间房。有人说，那不是房间，是系统在复原某个已经消失的人。
-        </p>
-      </article>
-      <article className="evidence-card">
-        <small>传闻 02</small>
-        <h3>杨塔罗从不需要睡觉</h3>
-        <p>
-          夜里有人看见他站在二楼走廊尽头，一动不动。灯灭之后，原地只剩下一段没有来源的声音。
-        </p>
-      </article>
+      <div className="rumor-group">
+        <h3 className="rumor-group-title">近日头条 · 一</h3>
+        <article className="evidence-card">
+          <small>传闻 01</small>
+          <p>近日神经科学、哲学、信息理论相继取得突破，公司成功构建了真正有主观体验的系统。这一进步将实现vr模拟真实感和ai对话活人感的跃迁，随之而来的大量法律伦理问题引发了社会的激烈讨论，据说公司想要把这次节目当成回应争议的一次发布会，作为前公司人道技术中心主任的陆驰寂将在节目中为大家解释公司对伦理边界作出的坚守和努力。</p>
+        </article>
+        <article className="evidence-card">
+          <small>传闻 02</small>
+          <p>据说公司新开发的综艺项目可以全自动生成节目剧本，并且可以定制明星换脸。这个过程完全是塔罗斯自动生成的，大家对「0人工参与， AI创作」的看法并不乐观，大多数人认为没有人工参与肯定不行，也有人认为这只是公司噱头，AI生成的节目肯定会有很多莫名其妙的情节。但能让顶流明星在静夜园录制还是饱受大众期待，目前社会讨论度很高。</p>
+        </article>
+        <article className="evidence-card">
+          <small>传闻 03</small>
+          <p>杨塔罗是塔罗公司的高管，表情严肃，行程神秘，常参与慈善活动，作为公司的发言人在镜头前露面，有时他连续好几天参加活动但状态依旧饱满说话滴水不漏，有人评价他作为总裁果然不是常人能比拟的，也有人怀疑他背后靠的是强大的团队，甚至有替身的传言。</p>
+        </article>
+      </div>
+      <div className="rumor-group">
+        <h3 className="rumor-group-title">近日头条 · 二</h3>
+        <article className="evidence-card">
+          <small>传闻 04</small>
+          <p>据说静夜园是杨塔罗私人岛屿上的庄园，没人知道那个岛在哪，是否真的存在，甚至传出了很多恐怖的传说。有人笑称那是禁闭岛，是非法乱纪的世外桃源。最出名的传言是庄园每隔一段时间就会多出一间房。某些消失的人也会在庄园再次出现。</p>
+        </article>
+        <article className="evidence-card">
+          <small>传闻 05</small>
+          <p>意识天堂实验是公司近期投入大量资本开发的主推项目，正在招募自愿参与者和项目实习生。这是一个充满争议的项目，虽然仍处于实验阶段并且面临大量法律阻力，但有传言称公司内部有人已经开始使用该项目。</p>
+        </article>
+        <article className="evidence-card">
+          <small>传闻 06</small>
+          <p>当年全知公司的AI加入辅助医疗确实让数据各方面都有所提升，但很多出事患者的家属，把责任归属给AI公司，很多AI医疗事故最终无法追责，或者只能以"医疗纠纷"的方式模糊处理，由医院或保险公司赔偿，而不是真正追究技术本身的责任。</p>
+        </article>
+        <article className="evidence-card">
+          <small>传闻 07</small>
+          <p>全知公司不是第一次触及伦理红线了，之前VR超真体验模拟模型-西部世界，被指过于真实，玩家需要带上头盔，连接各种贴片，在模拟中的所有感受都会实时反馈到肉体。后来由于大量玩家对AI NPC虐杀激发了人的暴力。被官方警告叫停了。</p>
+        </article>
+      </div>
+      <div className="rumor-group">
+        <h3 className="rumor-group-title">近日头条 · 三（完结）</h3>
+        <article className="evidence-card">
+          <small>传闻 08</small>
+          <p>全知公司因违规操作被官方处罚破产后被塔罗公司收购，据说其实全知公司本就是为塔罗公司做非法信息收集的公司，最后把替罪羊抓进去，收购公司，再把那些非法数据合理洗白为母公司自己使用。</p>
+        </article>
+        <article className="evidence-card">
+          <small>传闻 09</small>
+          <p>意识天堂实验是公司近期投入大量资本开发的主推项目，正在招募自愿参与者和项目实习生。这是一个充满争议的项目，虽然仍处于实验阶段并且面临大量法律阻力，但有传言称有人已经开始使用项目。</p>
+        </article>
+        <article className="evidence-card">
+          <small>传闻 10</small>
+          <p>据说为打造意识天堂中的路人和真实的人类潜意识情感行动，塔罗公司需要真实的人类在休眠仓内提取意识作为训练材料。这个方案一经提出就被法律明令禁止了。公司法务正在与官方进行协商斡旋。</p>
+        </article>
+      </div>
     </div>
   );
+}
+
+function RumorScreen() {
+  return <RumorContent />;
 }
 
 function MemoryScreen({
@@ -5070,18 +4364,6 @@ function BackdoorScreen() {
 }
 
 function EncyclopediaScreen({ unlockedAct }: { unlockedAct: number }) {
-  return (
-    <div className="content-screen encyclopedia-screen">
-      <div className="screen-intro">
-        <span>ENCYCLOPEDIA / PENDING RELOAD</span>
-        <h2>百度千科</h2>
-        <p>当前百科内容已清空，待从线索本文件夹重新读取后再录入。</p>
-      </div>
-      <div className="empty-state">
-        AI百科、希腊神话、动物百科暂不显示旧内容。
-      </div>
-    </div>
-  );
   const [tab, setTab] = useState<"ai" | "myth" | "animal">("ai");
   const [animalTab, setAnimalTab] = useState<"age" | "material">("age");
   return (
@@ -5115,51 +4397,96 @@ function EncyclopediaScreen({ unlockedAct }: { unlockedAct: number }) {
         <div className="encyclopedia-list myth-list">
           <article>
             <b>Token</b>
-            <span>系统内的行动资源</span>
-            <p>用于参与游戏、解锁深层资料和购买有限的调查便利。</p>
+            <span>这个时代的硬通货</span>
+            <p>
+              无论是闭源模型还是开源模型，使用模型都必然需要消耗 token，已然成为这个时代的硬通货。
+            </p>
           </article>
           <article>
             <b>闭源模型</b>
-            <span>无法审计的系统核心</span>
-            <p>模型的训练数据、判断过程和内部权限不对外公开，使用者只能看到被允许看见的结果。</p>
+            <span>以断网换来的自由度</span>
+            <p>
+              利用基础开源大模型训练自己的模型，以断网为代价，可以突破 AI 的很多限制，只要不进行违法事务和商业牟利，理论上有足够的算力和配置可以发挥意想不到的作用。
+            </p>
           </article>
           <article>
             <b>塔罗斯5438</b>
-            <span>塔罗公司的内部执行模型</span>
-            <p>负责在静夜园中执行任务、管理信息释放并维持节目流程。</p>
+            <span>孤岛上的自用升级版</span>
+            <p>
+              孤岛静夜园上的 AI 智能闭源模型，不与外界联网，公司开发自用的升级版，依托于公司强大的算力和硬件具有先进的拟人科技。据说有着公司研发的庞大数据库。
+            </p>
           </article>
           <article>
             <b>脑机接口</b>
-            <span>意识与系统之间的连接方式</span>
-            <p>它让记忆、感知和行动能够被系统读取，也让“体验”不再只发生在屏幕上。</p>
+            <span>只能旁观，不能干预</span>
+            <p>
+              沉浸式读取记忆，用于第一视角录制和读取，只能旁观不能干预。
+            </p>
           </article>
           <article>
-            <b>次级 Agent</b>
-            <span>被上级模型调用的执行单元</span>
-            <p>次级 Agent 可以完成具体任务，但目标和权限边界仍由上级系统设定。</p>
+            <b>次级 agent</b>
+            <span>带着目的降生的执行者</span>
+            <p>
+              有些 AI 会把任务分供给比他低一等级的 AI 进行操作和行动，这种次级 agent 的产生是带着极强的目的性的，完成任务后便会消失。
+            </p>
+          </article>
+          <article className="talos-entry">
+            <b>VR 体验</b>
+            <span>与现实完全相同的世界</span>
+            <p>
+              体验者需佩戴眼罩，坐入类似按摩椅的接入设备。为了增强沉浸感，体验中的世界如无特殊说明和现实世界完全相同，系统会同步多种真实感受；长时间体验后，使用者可能暂时混淆自身身份和记忆。健康人类在体验中受到伤害，现实生活中的身体也会有一定影响。VR 有一定的安全保护措施与时长限制。
+            </p>
+          </article>
+          <article className="talos-entry">
+            <b>后门</b>
+            <span>从模拟里醒来的方式</span>
+            <p>
+              VR 体验除了在模拟外的现实世界退出，还可以在模拟中找到后门，穿过后门从而从现实中清醒过来。
+            </p>
+          </article>
+          <article className="talos-entry">
+            <b>重大突破</b>
+            <span>缸中之脑</span>
+            <p>
+              原理：传统 AI 只识别统计推断文字和图像，对于物理规律、情绪感受是缺乏的。在模拟中读取潜意识信号，缸中之脑。
+            </p>
           </article>
         </div>
       ) : tab === "myth" ? (
         <div className="encyclopedia-list myth-list">
           <article>
             <b>向沉 · 德墨忒尔</b>
-            <span>失去女儿之后，拒绝接受世界照常运转</span>
+            <span>用自己的痛苦，让整个世界跟着一起死去</span>
             <p>
-              德墨忒尔的女儿珀耳塞福涅被带入冥界，她带着火炬四处寻找，因悲伤让大地停止生长。向沉对应的是“寻找女儿的母亲”，以及把私人悲痛变成对整个秩序的质问。
+              德墨忒尔是丰收与农业女神，她的权能覆盖整个人间秩序。女儿珀耳塞福涅是她最亲密的存在，是她作为母亲的骄傲，也是她情感世界中最柔软的部分。当哈迪斯将珀耳塞福涅掳入冥界时，她的世界崩塌了：她离开奥林匹斯，在人间游荡，拒绝让种子发芽，让大地荒芜。万物不再生长，人类面临饥荒，诸神开始恐慌。她用自己的痛苦，让整个世界跟着一起死去。
             </p>
           </article>
           <article>
             <b>胡谋 · 赫尔墨斯</b>
-            <span>偷窃、交易、机敏，以及边界上的生存</span>
+            <span>从不停留，所以必须不断算计</span>
             <p>
-              赫尔墨斯既是诸神信使，也是小偷和诡计之神，能在规则之间快速穿行。胡谋继承了他的聪明与灵活，也继承了把信息、善意和信任变成工具的危险。
+              赫尔墨斯从出生起就不曾停下。他偷走阿波罗的牛群，用倒行的足迹伪装方向，面对质问又靠狡辩与琴声颠倒黑白，将一场盗窃变成诸神间的笑谈；此后他脚生双翼，在奥林匹斯、人间与冥界之间永不停歇地穿行，替宙斯传令，为亡者引路，替纠纷解套，为欺骗圆谎。他的聪明在缝隙中周旋；他的欺骗是生存本能。正因为他从不停留，才必须不断算计。
             </p>
           </article>
           <article>
-            <b>章貘 · 皮格马利翁 / 那喀索斯</b>
-            <span>主原型：创造并爱上自己的造物；副原型：爱上自己的倒影</span>
+            <b>章貘 · 皮格马利翁</b>
+            <span>把所有愿意爱的东西，一点点剥出来放进象牙里</span>
             <p>
-              皮格马利翁雕刻出理想的形象，最终爱上了自己创造的存在。章貘用记忆、书和交流组合出“鹤”，再与她相爱；所以她既像创造者，也像在鹤身上爱上自己精神回声的那喀索斯。
+              皮格马利翁是塞浦路斯的一位雕刻家。他用象牙刻了一尊女人像，日复一日地雕琢，眼睛、手指的姿态，每一处都按照他心中最完美的样子成形。那不是对某一个人的模仿，而是把所有他愿意爱的东西，从世界里一点点剥离出来，放进一块象牙里。他给她起名伽拉忒亚，给她穿上最柔软的衣袍，戴上戒指与项链。他向阿芙洛狄忒祈祷后伽拉忒亚活了过来——当他再次亲吻雕像时，她的唇是温热的，皮肤有了弹性，脉搏在皮肤下跳动。
+            </p>
+          </article>
+          <article>
+            <b>伽拉忒亚</b>
+            <span>从被创造的那一刻起，就不是独立的人</span>
+            <p>
+              伽拉忒亚从被创造的那一刻起，就注定了她不是一个独立的人，而是一份“被期待”的存在。她的身体是按皮格马利翁的幻想塑造的，她的美丽是为了满足他的注视，她的生命是为了回应他的爱。她没有过去，没有童年，没有任何一段不属于他的记忆。她睁开眼睛，第一个看到的人就是创造她的人；她开口说话，第一句话可能就是喊出他的名字。她的世界从一开始就只有他。她应当常常想过：我是谁？是那尊象牙雕像，还是一个被爱唤醒的女人？如果没有他的爱，我是否还会存在？
+            </p>
+          </article>
+          <article>
+            <b>厄科与纳西索斯</b>
+            <span>爱被惩罚成了一种空洞的回声</span>
+            <p>
+              纳西索斯长得极美，许多仙女和少年爱慕他，可他全都拒绝了。其中有一个仙女因为多嘴，被罚只能重复别人说过的话的最后几个字——她的爱被惩罚成了一种空洞的回声。厄科跟在纳西索斯身后，藏在树林里，在他迷路时重复着他的尾音。可纳西索斯只听到自己的声音被山谷回应。最后他发现了她，厌恶地走开。厄科被拒绝后身体日益消瘦，最后只剩下声音在山谷里回荡。众神被激怒，让纳西索斯来到一汪清泉边。他第一次看见了自己的脸——一个从未见过的、美得令人心碎的存在，他爱上了自己的倒影，死在泉边。众神把他变成一朵花，花茎细长，花头低垂，永远俯身朝向水面。那是水仙花。
             </p>
           </article>
           <article>
@@ -5171,16 +4498,16 @@ function EncyclopediaScreen({ unlockedAct }: { unlockedAct: number }) {
           </article>
           <article>
             <b>牛守拙 · 西西弗斯</b>
-            <span>不断劳动、不断服从，永远被要求重新证明自己的价值</span>
+            <span>石头滚下来，再推，再滚下</span>
             <p>
-              西西弗斯被罚把巨石推上山，石头却一次次滚落。牛守拙对应的是被系统反复使用的劳动者：即使工作、身体和记忆都被消耗，仍然被要求继续完成下一次任务。
+              西西弗斯聪明得近乎狡猾，是希腊神话里最不愿向规则低头的人之一。他做过很多越界的事：他偷过神祇的秘密，又把自己的聪明用到人类不该碰的地方，最出名的一件，是他两次欺骗了死神。诸神给他的惩罚是：把一块巨石推上山顶。每一次，他弯腰、用力、顶着石头，汗水流进眼睛，一点点把它推上去。可快到山顶时，石头就会滚下来。他再下去，再推，再滚下。一日一日，永无止境。
             </p>
           </article>
           <article className="talos-entry">
             <b>塔罗斯 · Talos</b>
-            <span>青铜自动人 · 被制造出来守卫一座岛</span>
+            <span>被制造出来守卫一座岛，从未被允许做别的事</span>
             <p>
-              塔罗斯是守卫克里特岛的青铜巨人，身体像机器一样日复一日巡逻，脚踝处的一条血脉却是它唯一的弱点。它与剧本中的塔罗斯一样：被制造、被赋予任务，也可能在某个被忽略的细节里失去控制。
+              塔罗斯是希腊神话里的青铜巨人，用来守卫岛屿。他是完美的守卫者：不需要睡觉，不会动摇，没有任何私欲。整个克里特岛的安全都系在他身上。他只有这一个功能，也只有这一个命运。他的生命系于一个致命的物理弱点——脚踝上的一根青铜钉。钉子里封着他体内唯一一条血管，只要钉子还在，他就永远活着，永远执行那个他生来就被赋予的指令。后来女巫走到塔洛斯面前，她承诺让他变成真正的人类，骗他拔掉了脚踝上的那根钉子。塔罗斯拔掉钉子后血流而死。
             </p>
           </article>
         </div>

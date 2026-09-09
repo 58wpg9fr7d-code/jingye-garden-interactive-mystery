@@ -1,7 +1,7 @@
 import vinext from "vinext";
 import { defineConfig } from "vite";
 import hostingConfig from "./.openai/hosting.json";
-import { sites } from "./build/sites-vite-plugin";
+// import { sites } from "./build/sites-vite-plugin"; // 临时禁用：build 收尾写入 dist/.openai 被 WorkBuddy safe-delete 拦截
 
 const SITE_CREATOR_PLACEHOLDER_DATABASE_ID =
   "00000000-0000-4000-8000-000000000000";
@@ -52,7 +52,7 @@ export default defineConfig(async () => {
     },
     plugins: [
       vinext(),
-      sites(),
+      // sites(), // 临时禁用：避免 build 收尾向 dist/.openai 写入被 safe-delete 拦截
       cloudflare({
         viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] },
         config: localBindingConfig,

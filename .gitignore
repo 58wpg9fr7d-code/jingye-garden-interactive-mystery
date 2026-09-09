@@ -4,3 +4,22 @@ node_modules/
 __pycache__/
 .env
 *.log
+
+# 构建产物 / 临时备份
+dist/
+dist_*/
+**/.vercel
+**/.vite/
+
+# 内部文档（不进公开仓库）
+*.docx
+
+# 本地备份文件
+**/page.tsx.备份*
+**/*.备份*
+
+# 吉祥物相关（本次先排除，确认后单独添加）
+**/MASCOT.md
+**/mascot-config.ts
+**/components/
+**/public/mascot/
