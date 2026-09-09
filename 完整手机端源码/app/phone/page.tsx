@@ -10,9 +10,7 @@ import "./news-overrides.css";
 import SocialRecordsScreen from "./social-records";
 import { dmRoleScripts as allRoleScripts } from "./dm-role-scripts";
 import {
-  createRoom,
   getRoom,
-  joinRoom,
   updatePlayerTokens,
   type RoomState,
 } from "./room-api";
@@ -1221,9 +1219,9 @@ function FakeQr() {
 
 export default function PhoneApp() {
   const [role, setRole] = useState<PlayerRole | null>(null);
+  const [hostMode, setHostMode] = useState(false);
   const [roomCode, setRoomCode] = useState("");
   const [roomMessage, setRoomMessage] = useState("");
-  const [roomBusy, setRoomBusy] = useState(false);
   const [introComplete, setIntroComplete] = useState(false);
   const [active, setActive] = useState<AppKey>("home");
   const [screenTransitionState, setScreenTransitionState] = useState<
@@ -1284,39 +1282,19 @@ export default function PhoneApp() {
     setTokensByRole(state.tokensByRole);
   }
 
-  async function selectPlayerRole(selected: PlayerRole) {
-    if (!roomCode.trim()) {
+  function selectPlayerRole(selected: PlayerRole | "") {
+    if (selected) {
       setRole(selected);
-      return;
-    }
-    setRoomBusy(true);
-    setRoomMessage("");
-    try {
-      const result = await joinRoom(roomCode);
-      setRoomCode(result.room);
-      applyRoomState(result.state);
-    } catch (error) {
-      setRoomMessage(error instanceof Error ? error.message : "加入房间失败");
-    } finally {
-      setRoomBusy(false);
-      // 体验版：房间服务不可用时也允许直接进入桌面，不阻断单人体验
-      setRole(selected);
+      setHostMode(false);
+    } else {
+      // 不选角色直接进入主持人桌面
+      setRole(null);
+      setHostMode(true);
     }
   }
 
-  async function enterEstate() {
-    setRoomBusy(true);
-    setRoomMessage("");
-    try {
-      const result = await createRoom();
-      setRoomCode(result.room);
-      applyRoomState(result.state);
-    } catch {
-      setRoomCode("");
-    } finally {
-      setRoomBusy(false);
-      setIntroComplete(true);
-    }
+  function enterEstate() {
+    setIntroComplete(true);
   }
 
   useEffect(() => {
@@ -1424,7 +1402,7 @@ export default function PhoneApp() {
         ...[roleApps[role]],
         ...(role === "胡谋" && unlocked ? [backdoorApp] : []),
       ]
-    : [...apps, ...commonApps];
+    : [...commonApps];
   function setPlayerTokenValue(target: PlayerRole, value: number) {
     const nextValue = Math.max(0, value);
     setTokensByRole((items) => ({ ...items, [target]: nextValue }));
@@ -1465,14 +1443,8 @@ export default function PhoneApp() {
               showCover={Boolean(role)}
               onSkip={() => void enterEstate()}
             />
-          ) : !role ? (
-            <RoleSelect
-              roomCode={roomCode}
-              roomMessage={roomMessage}
-              roomBusy={roomBusy}
-              onRoomCodeChange={(value) => setRoomCode(value.toUpperCase())}
-              onSelect={selectPlayerRole}
-            />
+          ) : !role && !hostMode ? (
+            <RoleSelect onSelect={selectPlayerRole} />
           ) : active === "home" ? (
             <HomeScreen
               role={role}
@@ -1694,35 +1666,14 @@ function LandingSplash({
 }
 
 function RoleSelect({
-  roomCode,
-  roomMessage,
-  roomBusy,
-  onRoomCodeChange,
   onSelect,
 }: {
-  roomCode: string;
-  roomMessage: string;
-  roomBusy: boolean;
-  onRoomCodeChange: (value: string) => void;
-  onSelect: (role: PlayerRole) => void;
+  onSelect: (role: PlayerRole | "") => void;
 }) {
   const roles: PlayerRole[] = ["向沉", "胡谋", "章貘", "朱渴焰", "牛守拙"];
   const [selectedRole, setSelectedRole] = useState<PlayerRole | "">("");
   return (
     <div className="role-select">
-      <div className="entry-question-box">
-        <label htmlFor="room-code">静夜园的通行密码是？</label>
-        <input
-          id="room-code"
-          value={roomCode}
-          onChange={(event) => onRoomCodeChange(event.target.value)}
-          placeholder="请输入通行密码"
-          maxLength={6}
-          autoCapitalize="characters"
-          required
-        />
-        {roomMessage && <small>{roomMessage}</small>}
-      </div>
       <div className="entry-question-box">
         <label htmlFor="player-role">你是？</label>
         <select
@@ -1730,19 +1681,18 @@ function RoleSelect({
           className="role-picker"
           value={selectedRole}
           onChange={(event) => setSelectedRole(event.target.value as PlayerRole)}
-          disabled={roomBusy}
         >
           <option value="" disabled>请选择角色</option>
           {roles.map((item) => <option key={item} value={item}>{item}</option>)}
         </select>
+        <small>不选角色直接进入，将以主持人身份打开桌面。</small>
       </div>
       <button
         type="button"
         className="enter-estate"
-        disabled={!roomCode.trim() || !selectedRole || roomBusy}
-        onClick={() => selectedRole && onSelect(selectedRole)}
+        onClick={() => onSelect(selectedRole)}
       >
-        {roomBusy ? "正在进入…" : "进入庄园　›"}
+        进入庄园　›
       </button>
     </div>
   );
@@ -1753,29 +1703,33 @@ function HomeScreen({
   desktopApps,
   onOpen,
 }: {
-  role: PlayerRole;
+  role: PlayerRole | null;
   desktopApps: typeof apps;
   onOpen: (key: AppKey) => void;
 }) {
-  const wallpaper: Record<PlayerRole, string> = {
+  const wallpaper: Record<PlayerRole | "主持人", string> = {
     牛守拙: "/script-images/wallpaper-niu.jpeg",
     朱渴焰: "/script-images/wallpaper-zhu.jpeg",
     胡谋: "/script-images/wallpaper-hu.jpeg",
     章貘: "/script-images/wallpaper-zhang.jpeg",
     向沉: "/script-images/wallpaper-xiang.jpeg",
+    主持人: "/script-images/landing-cover.jpeg",
   };
-  const commonKeys: AppKey[] = ["encyclopedia", "news", "social", "tarot"];
+  // 主持人桌面不展示个人化的小蓝书，只留公共应用
+  const commonKeys: AppKey[] = role
+    ? ["encyclopedia", "news", "social", "tarot"]
+    : ["encyclopedia", "news", "tarot"];
   const encyclopediaApp = desktopApps.find((item) => item.key === "encyclopedia");
   const publicAppTiles = desktopApps
     .filter((item) => commonKeys.includes(item.key) && item.key !== "encyclopedia")
     .slice(0, 3);
-  const roleApp = roleApps[role];
+  const roleApp = role ? roleApps[role] : null;
   const appTiles = roleApp ? [roleApp, ...publicAppTiles] : publicAppTiles;
   return (
     <div
       className="home-screen role-wallpaper"
       style={{
-        backgroundImage: `url('${wallpaper[role]}')`,
+        backgroundImage: `url('${wallpaper[role ?? "主持人"]}')`,
       }}
     >
       <div className="home-widgets">
